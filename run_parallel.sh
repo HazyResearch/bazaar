@@ -1,10 +1,11 @@
+#!/bin/sh
 # Parse sentences in parallel
 
 set -eu
 
 # Usage: this_script input_file parallelism input_batch_size
 
-if [ "$#" -le 2 ]; then
+if [ "$#" -le 1 ]; then
   echo "Usage: $0 input_file parallelism [input_batch_size=1000] [sentence_words_limit=120]"
   exit
 fi
@@ -23,7 +24,7 @@ rm -f $INPUT_FILE.split/*
 split -a 10 -l $INPUT_BATCH_SIZE $INPUT_FILE $INPUT_FILE.split/input-
 
 # Match all files in the split directory
-find $INPUT_FILE.split/ -name "input-*" 2>/dev/null -print0 | xargs -0 -P $PARALLELISM -L 1 bash -c "${RUN_SCRIPT} -l ${SENTENCE_WORDS_LIMIT}"' -f "$0"'
+find $INPUT_FILE.split -name "input-*" 2>/dev/null -print0 | xargs -0 -P $PARALLELISM -L 1 bash -c "${RUN_SCRIPT} -l ${SENTENCE_WORDS_LIMIT}"' -f "$0"'
 
 echo "Output TSV files are in: $INPUT_FILE.split/*.parsed"
 echo "To load them into the databse, run: cat $INPUT_FILE.split/*.parsed | psql YOUR_DB_NAME -c "'"COPY sentences FROM STDIN"'

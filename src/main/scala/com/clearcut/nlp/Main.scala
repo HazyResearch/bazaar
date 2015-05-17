@@ -10,7 +10,7 @@ import scala.io.Source
 object Main extends App {
 
   // Parse command line options
-  case class Config(fileName:String, formatIn:String = "json", documentKey: String, idKey: String, maxSentenceLength: String, //numThreads: String,
+  case class Config(fileName:String, formatIn:String, documentKey: String, idKey: String, maxSentenceLength: String, //numThreads: String,
                     annotators: String = "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
 
   val parser = new scopt.OptionParser[Config]("DeepDive DocumentParser") {
@@ -40,7 +40,7 @@ object Main extends App {
     } text("Input file name")
   }
 
-  val conf = parser.parse(args, Config(null, null, "text", "id", "100", null)) getOrElse {
+  val conf = parser.parse(args, Config(null, "json", "text", "id", "100", null)) getOrElse {
     throw new IllegalArgumentException
   }
 
