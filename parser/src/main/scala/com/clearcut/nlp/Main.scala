@@ -10,10 +10,15 @@ import scala.io.Source
 object Main extends App {
 
   // Parse command line options
-  case class Config(fileName:String, formatIn:String, documentKey: String, idKey: String, maxSentenceLength: String, //numThreads: String,
+  case class Config(serverPort: Integer = null,
+                    fileName: String = null,
+                    formatIn: String = "json",
+                    documentKey: String = "text",
+                    idKey: String = "id",
+                    maxSentenceLength: String = "100",
                     annotators: String = "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
 
-  val parser = new scopt.OptionParser[Config]("DeepDive DocumentParser") {
+  val optionsParser = new scopt.OptionParser[Config]("DeepDive DocumentParser") {
     head("DocumentParser for TSV Extractors", "0.1")
     head("Input: stdin or a TSV file. The first column is document_id, the second column is the content of document.")
     head("Output: stdout or a TSV file named $inputfile.parsed")
@@ -29,18 +34,18 @@ object Main extends App {
     opt[String]('l', "maxLength") action { (x, c) =>
       c.copy(maxSentenceLength = x)
     } text("Maximum length of sentences to parse (makes things faster) (default: 100)")
-//    opt[String]('t', "numThreads") action { (x, c) =>
-//      c.copy(numThreads = x)
-//    } text("Number of threads (default: # of available cores)")
     opt[String]('a', "annotators") action { (x, c) =>
       c.copy(annotators = x)
     } text("CoreNLP annotators (default: 'tokenize,cleanxml,ssplit,pos,lemma', minimum: 'tokenize,ssplit')")
     opt[String]('f', "file") action { (x, c) =>
       c.copy(fileName = x)
     } text("Input file name")
+    opt[Int]('p', "serverPort") action { (x, c) =>
+      c.copy(serverPort = x)
+    } text("Run as an HTTP service")
   }
 
-  val conf = parser.parse(args, Config(null, "json", "text", "id", "100", null)) getOrElse {
+  val conf = optionsParser.parse(args, Config()) getOrElse {
     throw new IllegalArgumentException
   }
 
@@ -48,7 +53,7 @@ object Main extends App {
 
   // Configuration has been parsed, execute the Document parser
   val props = new Properties()
-  props.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
+  props.put("annotators", conf.annotators)
   props.put("parse.maxlen", conf.maxSentenceLength)
   props.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
   props.put("threads", "1") // Should use extractor-level parallelism
@@ -60,6 +65,13 @@ object Main extends App {
     java.nio.charset.Charset.forName("utf-8"))
   codec.onMalformedInput(CodingErrorAction.IGNORE)
   codec.onUnmappableCharacter(CodingErrorAction.IGNORE)
+
+  if (conf.serverPort != null) {
+    Console.println("Listening on port " + conf.serverPort + "...")
+    new Server(dp, conf.serverPort).run()
+    System.exit(0)
+  }
+
 
   // Read each json object from stdin or file and parse the document
   var input = Source.stdin
@@ -100,14 +112,14 @@ object Main extends App {
 //    {
 //      val documentId = tsvArr(0)
 //      val documentStr = tsvArr(1)
-  
+
       System.err.println(s"Parsing document ${documentId}...")
- 
-      try { 
+
+      try {
         // Output a TSV row for each sentence
         dp.parseDocumentString(documentStr).sentences.zipWithIndex
             .foreach { case (sentenceResult, sentence_idx) =>
-  
+
           if (documentId != "") {
             val outline = List(
               documentId,
@@ -131,7 +143,7 @@ object Main extends App {
           }
         }
       } catch {
-        case e:Exception => 
+        case e:Exception =>
            val erroutFile = new File(conf.fileName + ".failed")
            errout = new BufferedWriter(
              new OutputStreamWriter(new FileOutputStream(erroutFile), "UTF-8"),

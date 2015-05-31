@@ -14,7 +14,9 @@ libraryDependencies ++= List(
   "com.github.scopt" %% "scopt" % "3.2.0",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1" classifier "models",
-  "org.scalatest" % "scalatest_2.10" % "2.0.RC2" % "test"
+  "org.scalatest" % "scalatest_2.10" % "2.0.RC2" % "test",
+  "org.http4s" %% "http4s-dsl" % "0.7.0",
+  "org.http4s" %% "http4s-jetty" % "0.7.0"
 )
 
 unmanagedJars in Compile += file("lib/stanford-srparser-2014-10-23-models.jar")
