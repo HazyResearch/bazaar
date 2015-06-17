@@ -12,7 +12,7 @@ We assume that your input has the following format. There's one line per documen
 ```
 
 You can then run the NLP pipeline on 16 cores as follows:
-```
+```bash
 ./run_parallel.sh -in="input.json" --parallelism=16 -i json -k "item_id" -v "content"
 ```
 The output will be files in tsv-format that you can directly load into the database.
