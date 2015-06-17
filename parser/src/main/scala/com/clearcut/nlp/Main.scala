@@ -91,27 +91,11 @@ object Main extends App {
     )
   }
   var reader:Iterator[(String,String)] = if (conf.formatIn.equals("json"))
-    new JSONReader(input, "id", "text")
+    new JSONReader(input, conf.idKey, conf.documentKey)
   else
     new TSVReader(input, 0, 1)
 
   reader.foreach { case (documentId, documentStr) =>
-
-
-
-//  }
-//
-//
-//  input.getLines.zipWithIndex.foreach { case(line, idx) =>
-//
-
-
-
-//    val tsvArr = line.trim.split("\t")
-//    if (tsvArr.length >= 2) // skip malformed lines
-//    {
-//      val documentId = tsvArr(0)
-//      val documentStr = tsvArr(1)
 
       System.err.println(s"Parsing document ${documentId}...")
 
@@ -124,7 +108,7 @@ object Main extends App {
             val outline = List(
               documentId,
               sentence_idx + 1,
-              sentenceResult.sentence,
+              dp.replaceChars(sentenceResult.sentence),
               dp.list2TSVArray(sentenceResult.words),
               dp.list2TSVArray(sentenceResult.lemma),
               dp.list2TSVArray(sentenceResult.pos_tags),
@@ -152,9 +136,6 @@ object Main extends App {
            //errout.write(s"Warning: skipped line ${idx} due to error in corenlp: ${line}\n")
            e.printStackTrace(new java.io.PrintWriter(errout))
       }
-//    } else {
-//      System.err.println(s"Warning: skipped malformed line ${idx}: ${line}")
-//    }
   }
 
   if (output != null) {

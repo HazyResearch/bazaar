@@ -87,4 +87,11 @@ class DocumentParser(props: Properties) {
     else
       str
   }
+
+  // NOTE: an alternative would be to quote the field correctly
+  // http://stackoverflow.com/questions/3089077/new-lines-in-tab-delimited-or-comma-delimtted-output
+  def replaceChars(str: String) : String = {
+    str.replace("\n", " ").replace("\t", " ")
+  }
+
 }
