@@ -42,7 +42,7 @@ def install():
 
 @task
 def split():
-    local('mkdir -p ~/segments')
+    local('mkdir -p segments')
     local('split -a 5 -l 2 test/INPUT segments/')
 
 @task
@@ -69,10 +69,7 @@ def echo():
 @task
 @parallel
 def parse():
-    run('cd ~/parser; chmod +x *.sh; ./run_parallel.sh')
-    run('echo "$HOSTNAME"')
-    pass
-
+    run('find ~/segments -name "*" -t f 2>/dev/null -print0 | xargs -0 -P 2 -L 1 bash -c "cd ~/parser; ./run.sh -i json -k id -v content"\' -f "$0"\'')
 
 @parallel
 def collect():

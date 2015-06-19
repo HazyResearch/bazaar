@@ -80,7 +80,7 @@ elif [[ "$CLOUD" == "ec2" ]]; then
     echo "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
     exit 1
   fi
-  echo "LAUNCHING $NUM_MACHINES MACHINES ON AZURE"
+  echo "LAUNCHING $NUM_MACHINES MACHINES ON EC-2"
 
   go run src/create-ec2.go -n $NUM_MACHINES
 
