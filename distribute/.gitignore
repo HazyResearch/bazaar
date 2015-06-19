@@ -1,0 +1,3 @@
+*.pyc
+ssh
+conf/credentials.publishsettings
