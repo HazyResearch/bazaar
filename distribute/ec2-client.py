@@ -8,107 +8,128 @@ import shutil
 import sys
 import time
 
-session = botocore.session.get_session()
-client = session.create_client('ec2', region_name='us-east-1')
 
 # Expects the following environment variables
 #    AWS_ACCESS_KEY_ID='...'
 #    AWS_SECRET_ACCESS_KEY='...'
 
-def import_key_pair():
-    with open("ssh/bazaar.key.pub", "rb") as pubKeyFile:
-        f = pubKeyFile.read()
-        bytes = bytearray(f)
+AMI = 'ami-d05e75b8'
+USERNAME = 'ubuntu'
+INSTANCE_TYPE = 'm3.large'
 
-    response = client.import_key_pair(
-        KeyName='bazaar',
-        PublicKeyMaterial=bytes
-    )
+PUBLIC_KEY = 'ssh/bazaar.key.pub'
 
-def delete_key_pair():
-    response = client.delete_key_pair(
-        KeyName='bazaar'
-    )
 
-def create_security_group():
-    # check if security group exists already
-    response = client.describe_security_groups(
-        GroupNames=['bazaar-group'],
-    )
-    if not response['SecurityGroups']:
-        print("Creating security group bazaar-group")
-        response = client.create_security_group(
-            GroupName='bazaar-group',
-            Description='Security Group enabling SSH for DeepDive\'s Bazaar',
+class EC2Client:
+
+    def __init__(self):
+        self.session = botocore.session.get_session()
+        self.client = self.session.create_client('ec2', region_name='us-east-1')
+
+    def import_key_pair(self):
+        with open(PUBLIC_KEY, "rb") as pubKeyFile:
+            f = pubKeyFile.read()
+            bytes = bytearray(f)
+
+        response = self.client.import_key_pair(
+            KeyName='bazaar',
+            PublicKeyMaterial=bytes
         )
 
-def run_instances(num=1):
-    response = client.run_instances(
-        ImageId='ami-d05e75b8',
-        MinCount=int(num),
-        MaxCount=int(num),
-        KeyName='bazaar',
-        SecurityGroups=[ 'bazaar-group' ],
-        InstanceType='m3.large',
-        BlockDeviceMappings=[ 
-            {
-                'VirtualName': 'ephemeral0',
-                'DeviceName': '/dev/xvdh',
+    def delete_key_pair(self):
+        response = self.client.delete_key_pair(
+            KeyName='bazaar'
+        )
+
+    def create_security_group(self):
+        # check if security group exists already
+        try:
+            response = self.client.describe_security_groups(
+               GroupNames=['bazaar-group'],
+            )
+        except:
+            #if not response['SecurityGroups']:
+            print("Creating security group bazaar-group")
+            response = self.client.create_security_group(
+               GroupName='bazaar-group',
+               Description='Security Group enabling SSH for DeepDive\'s Bazaar',
+            )
+            #response.authorize('tcp', 22, 22, '0.0.0.0/0')
+            response = self.client.authorize_security_group_ingress(
+                GroupName='bazaar-group',
+                IpProtocol='tcp',
+                FromPort=22,
+                ToPort=22,
+                CidrIp='0.0.0.0/0')
+            print(response)
+
+    def run_instances(self, num=1):
+        response = self.client.run_instances(
+            ImageId=AMI, #'ami-d05e75b8',
+            MinCount=int(num),
+            MaxCount=int(num),
+            KeyName='bazaar',
+            SecurityGroups=[ 'bazaar-group' ],
+            InstanceType=INSTANCE_TYPE, #'m3.large',
+            BlockDeviceMappings=[ 
+                {
+                    'VirtualName': 'ephemeral0',
+                    'DeviceName': '/dev/xvdh',
+                },
+            ],
+            Monitoring={
+                'Enabled': False
             },
-        ],
-        Monitoring={
-            'Enabled': False
-        },
-    )
-    with open('.state/INSTANCE_IDS', 'w') as f:
-        for inst in response['Instances']:
-            f.write(inst['InstanceId'] + '\n')
-    with open('.state/CLOUD', 'w') as f:
-        f.write('ec-2')
+        )
+        with open('.state/INSTANCE_IDS', 'w') as f:
+            for inst in response['Instances']:
+                f.write(inst['InstanceId'] + '\n')
+        with open('.state/CLOUD', 'w') as f:
+            f.write('ec-2')
 
-def read_instance_ids():
-    ids = []
-    with open('.state/INSTANCE_IDS', 'r') as f:
-        for line in f:
-            ids.append(line.rstrip())
-    return ids
+    def read_instance_ids(self):
+        ids = []
+        with open('.state/INSTANCE_IDS', 'r') as f:
+            for line in f:
+                ids.append(line.rstrip())
+        return ids
 
-def wait_for_public_dns():
-    ids = read_instance_ids()
+    def wait_for_public_dns(self):
+        ids = self.read_instance_ids()
 
-    response = None
-    while True:
-        response = client.describe_instances(
+        response = None
+        while True:
+            response = self.client.describe_instances(
+                InstanceIds=ids
+            )
+            num_pending = 0
+            for inst in response['Reservations'][0]['Instances']:
+                if inst['State']['Name'] == 'pending':
+                    num_pending = num_pending + 1
+            if num_pending == 0:
+                break
+            print("Pending: %d" % num_pending)
+            time.sleep(1)
+
+        with open('.state/HOSTS', 'w') as f:
+            for inst in response['Reservations'][0]['Instances']:
+                f.write(USERNAME + '@' + inst['PublicDnsName'] + ':22\n')
+ 
+    def terminate_instances(self):
+        ids = self.read_instance_ids()
+        response = self.client.terminate_instances(
             InstanceIds=ids
         )
-        num_pending = 0
-        for inst in response['Reservations'][0]['Instances']:
-            if inst['State']['Name'] == 'pending':
-                num_pending = num_pending + 1
-        if num_pending == 0:
-            break
-        print("Pending: %d" % num_pending)
-        time.sleep(1)
+        shutil.rmtree(".state")
 
-    with open('.state/HOSTS', 'w') as f:
-        for inst in response['Reservations'][0]['Instances']:
-            f.write(inst['PublicDnsName'] + '\n')
-
-def terminate_instances():
-    ids = read_instance_ids()
-    response = client.terminate_instances(
-        InstanceIds=ids
-    )
-    shutil.rmtree(".state")
-
-def create_state_dir():
-    try:
-        os.makedirs('.state')
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir('.state'):
-            print("Found existing .state dir. Please terminate instances first.")
-            exit(1)
-        else: raise
+    def create_state_dir(self):
+        try:
+            os.makedirs('.state')
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir('.state'):
+                print("Found existing .state dir. Please terminate instances first.")
+                exit(1)
+            else: raise
 
 def launch(argv):
     num_instances = 1
@@ -120,26 +141,34 @@ def launch(argv):
     for opt, arg in opts:
         if opt == '-n':
             num_instances = arg
-    delete_key_pair()
-    import_key_pair()
-    create_state_dir()
-    create_security_group()
-    run_instances(num_instances)
-    wait_for_public_dns()
+    client = EC2Client()
+    client.delete_key_pair()
+    client.import_key_pair()
+    client.create_state_dir()
+    client.create_security_group()
+    client.run_instances(num_instances)
+    client.wait_for_public_dns()
 
 def terminate():
-    delete_key_pair()
-    import_key_pair()
-    terminate_instances()
+    client = EC2Client()
+    client.delete_key_pair()
+    client.import_key_pair()
+    client.terminate_instances()
+
+def usage():
+    print("Usage: ec2-client.py launch|terminate [OPTIONS]")
+    exit(1)
 
 def main(argv):
+    if len(argv) < 1:
+        usage()
     cmd = argv[0]
     if cmd == 'launch':
         launch(argv[1:])
     elif cmd == 'terminate':
         terminate()
     else:
-        print("Usage: ec2-client.py launch|terminate [OPTIONS]")
+        usage()
 
 if __name__ == "__main__":
    main(sys.argv[1:])
