@@ -29,6 +29,7 @@ cert_path='ssh/bazaar.pem'
 linux_image_name = 'b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB'
 container_name = 'bazaarctr'
 location = 'West US'
+role_size = 'Standard_D2'
 
 class AzureClient:
 
@@ -139,6 +140,11 @@ class AzureClient:
     def delete_storage(self):
         self.sms.delete_storage_account('mystorageaccount')
 
+    def list_role_sizes(self):
+        result = self.sms.list_role_sizes()
+        for rs in result:
+            print('Name: ' + rs.name)
+
     def _wait_for_async(self, request_id):
         self.sms.wait_for_operation_status(request_id, timeout=600)
 
@@ -222,7 +228,7 @@ class AzureClient:
         result = self.sms.create_virtual_machine_deployment(
             service_name, deployment_name, 'production',
             deployment_name + 'label', roles[0], system, os_hd,
-            network, role_size='Small')
+            network, role_size=role_size)
 
         self._wait_for_async(result.request_id)
         self._wait_for_deployment(service_name, deployment_name)
@@ -235,7 +241,7 @@ class AzureClient:
             network = self._network_config(subnet_name, port)
 
             result = self.sms.add_role(service_name, deployment_name, roles[i],
-                system, os_hd, network)
+                system, os_hd, network, role_size=role_size)
             self._wait_for_async(result.request_id)
             self._wait_for_role(service_name, deployment_name, roles[i])
          
@@ -243,6 +249,8 @@ class AzureClient:
         with open('.state/HOSTS', 'w') as f:
             for i in range(0, len(roles)):
                 f.write('bazaar@' + service_name + '.cloudapp.net:' + str(2000+i) + '\n')
+        with open('.state/CLOUD', 'w') as f:
+            f.write('azure')
 
 def launch(argv):
     num_instances = 1
@@ -254,7 +262,7 @@ def launch(argv):
     for opt, arg in opts:
         if opt == '-n':
             num_instances = int(arg)
-    print('launching ' + str(num_instances) + ' instances')
+    print('Launching ' + str(num_instances) + ' instances on Azure')
 
     client = AzureClient()
     client.create_state_dir()
@@ -266,7 +274,7 @@ def terminate():
     client.delete_hosted_service()
 
 def usage():
-    print("Usage: azure-client.py launch|terminate [OPTIONS]")
+    print("Usage: azure-client.py launch|terminate|role_sizes [OPTIONS]")
     exit(1)
 
 def main(argv):
@@ -277,6 +285,9 @@ def main(argv):
         launch(argv[1:])
     elif cmd == 'terminate':
         terminate()
+    elif cmd == 'role_sizes':
+        client = AzureClient()
+        client.list_role_sizes()
     else:
         usage()
 

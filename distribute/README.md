@@ -34,6 +34,7 @@ Before you begin, run `./setup.sh` to make sure all dependencies are installed.
 3.  Copy chunks to remote machines
     ```bash
     fab copy
+    fab copy:input=xml_parsed.json,batch_size=100    
     ```
 
 4.  Run parser on remote machines
