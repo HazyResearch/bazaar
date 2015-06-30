@@ -66,18 +66,19 @@ pip install fabric
 ```
 
 The fab command line tool should work now.
+
 Note that you will have to run `source env/bin/activate` after each login to initialize the environment.
 
 ### Generate SSH Keys 
 
-Now, generate SSH keys with
+Now, generate SSH keys.
 ```
 ./generate-keys.sh
 ```
 
 ### Build
 
-Finally, create a self-extracting installer that will be run on worker nodes:
+Finally, create a self-extracting installer that will be run on worker nodes.
 ```
 cd installer
 ./build 
@@ -86,18 +87,18 @@ cd ..
 
 ### Set EC2 or Azure credentials
 
-Edit `env\_local.sh` as needed.
+Edit `env_local.sh` as needed.
 
 For ec2, we recommend storing credentials at `~/.aws/credentials` following Amazon's recommendations.
 
-For azure, upload `ssh/mycert.cer` to the management portal via the "Upload" action of the "Settings" tab, and set the following variable in `env\_local.sh`:
+For azure, upload `ssh/mycert.cer` to the management portal via the "Upload" action of the "Settings" tab, and set the following variable in `env_local.sh`:
 ```
-AZURE_SUBSCRIPTION_ID='...'
+export AZURE_SUBSCRIPTION_ID='...'
 ```
 
-For each, ec2 and azure, you can set the instance types you would like to use in `env\_local.sh`.
+For each, ec2 and azure, you can set the instance types you would like to use in `env_local.sh`.
 
-Initialize by running
+After you are done, initialize the environment by running
 ```
 source env_local.sh
 ````
@@ -116,4 +117,7 @@ source env_local.sh
    choose a more powerful instance type (eg. Standard_D14 on azure),
    and increase the parallelism in step 4 above (eg. 8 or 16).
 
-
+*  By default, Azure only allows you to use a maximum of 20 cores
+   in total. This means you can not launch more than one instance
+   of type Standard_D14 (16 cores) at a time. You can submit a
+   request to Microsoft to increase your quota of cores.

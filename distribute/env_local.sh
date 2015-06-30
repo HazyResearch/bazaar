@@ -4,7 +4,7 @@
 # AZURE SETTINGS
 
 # your azure subscription ID (look it up under 'Settings' in the management portal)
-export AZURE_SUBSCRIPTION_ID='baf18420-bac2-4745-891d-16e249928ce8'
+export AZURE_SUBSCRIPTION_ID='00000000-0000-0000-0000-000000000000'
 
 # name for service (must be unique among all azure users)
 export AZURE_SERVICE_NAME='ddbazaa'

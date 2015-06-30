@@ -124,7 +124,7 @@ class AzureClient:
             storage_account_name, container_name, blob_name)
 
     def create_storage(self):
-        name = AZURE_STORAGE_ACCOUNT #'ddxstorage'
+        name = AZURE_STORAGE_ACCOUNT 
         label = 'mystorageaccount'
         location = 'West US'
         desc = 'My storage account description.'
@@ -148,7 +148,7 @@ class AzureClient:
             print('')
 
     def delete_storage(self):
-        self.sms.delete_storage_account('ddxstorage')
+        self.sms.delete_storage_account(AZURE_STORAGE_ACCOUNT)
 
     def list_role_sizes(self):
         result = self.sms.list_role_sizes()
@@ -259,6 +259,9 @@ class AzureClient:
         with open('.state/HOSTS', 'w') as f:
             for i in range(0, len(roles)):
                 f.write('bazaar@' + AZURE_SERVICE_NAME + '.cloudapp.net:' + str(2000+i) + '\n')
+        with open('.state/DIRS', 'w') as f:
+            for i in range(0, len(roles)):
+                f.write('/mnt\n')
         with open('.state/CLOUD', 'w') as f:
             f.write('azure')
 
@@ -284,7 +287,8 @@ def launch(argv):
 def terminate():
     client = AzureClient()
     client.delete_hosted_service()
-    client.delete_storage()
+    # We don't delete storage account, because it takes a long time to re-create.
+    #client.delete_storage()
 
 def usage():
     print("Usage: azure-client.py launch|terminate|role_sizes [OPTIONS]")

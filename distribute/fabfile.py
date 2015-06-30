@@ -35,14 +35,15 @@ def install():
 @parallel
 def copy(input='test/input.json',batch_size=1000):
     ensure_hosts()
+    directory = env.directories[env.host_string]
     local('rm -rf segments')
     local('mkdir -p segments')
     local('split -a 5 -l ' + str(batch_size) + ' ' + input + ' segments/')
-    run('rm -rf ~/segments')
-    run('mkdir -p ~/segments')
+    user = run('whoami')
+    run('sudo chown ' + user + ' ' + directory)
+    run('rm -rf ' + directory + '/segments')
+    run('mkdir -p ' + directory + '/segments')
     num_machines = len(env.all_hosts)
-    print(env.all_hosts)
-    print(env.host_string)
     machine = env.all_hosts.index(env.host_string)
 
     output = local('find segments -type f', capture=True)
@@ -52,7 +53,7 @@ def copy(input='test/input.json',batch_size=1000):
         file_machine = file_num % num_machines
         if file_machine == machine:
             print "put %s on machine %d" % (f, file_machine)
-            put(local_path=f, remote_path='~/segments')
+            put(local_path=f, remote_path=directory + '/segments')
 
 @task
 @parallel
@@ -64,8 +65,9 @@ def echo():
 @parallel
 def parse(parallelism=2, key_id='item_id', content_id='content'):
     ensure_hosts()
+    directory = env.directories[env.host_string]
     with prefix('export PATH=~/jdk1.8.0_45/bin:$PATH'):
-        run('find ~/segments -name "*" -type f 2>/dev/null -print0 | xargs -0 -P ' + 
+        run('find ' + directory + '/segments -name "*" -type f 2>/dev/null -print0 | xargs -0 -P ' + 
           str(parallelism) + ' -L 1 bash -c \'cd ~/parser; ./run.sh -i json -k ' +
           key_id + ' -v ' + content_id + ' -f \"$0\"\'')
 
@@ -73,8 +75,9 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
 @parallel
 def collect():
     ensure_hosts()
+    directory = env.directories[env.host_string]
     # collect all files ending in .parsed and .failed
-    output = run('find ~/segments/ -name "*.*" -type f')
+    output = run('find ' + directory + '/segments/ -name "*.*" -type f')
     if output == '':
        print('Warning: No result segments on node') 
     else:
@@ -110,6 +113,10 @@ def read_hosts():
         env.hosts = open('.state/HOSTS', 'r').readlines()
         env.user = "ubuntu"
         env.key_filename = "./ssh/bazaar.key"
+        dirs = open('.state/DIRS', 'r').readlines()
+        env.directories = {}
+        for i in range(0, len(dirs)):
+            env.directories[env.hosts[i].rstrip()] = dirs[i].rstrip()
     else:
         env.hosts = []
 

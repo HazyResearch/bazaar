@@ -114,6 +114,9 @@ class EC2Client:
         with open('.state/HOSTS', 'w') as f:
             for inst in response['Reservations'][0]['Instances']:
                 f.write(USERNAME + '@' + inst['PublicDnsName'] + ':22\n')
+        with open('.state/DIRS', 'w') as f:
+            for inst in response['Reservations'][0]['Instances']:
+                f.write('/home/' + USERNAME + '\n')
  
     def terminate_instances(self):
         ids = self.read_instance_ids()
