@@ -152,6 +152,7 @@ def launch(argv):
     client.create_security_group()
     client.run_instances(num_instances)
     client.wait_for_public_dns()
+    print('Note: it might still take a few minutes until instances become accessible.')
 
 def terminate():
     client = EC2Client()
