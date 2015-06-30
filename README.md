@@ -3,7 +3,7 @@ Bazaar
 
 A collection of tools to generate input for DeepDive.
 
-## [Parser](parser/README.md)
+## [Parser](tree/master/parser)
 
 Parser is a wrapper of Stanford CoreNLP which takes a simple JSON format as
 input and generates a TSV file that can be directly loaded into a database. 
@@ -12,8 +12,8 @@ There are four different ways in which the parser package is used.
 
 1. `parser/run.sh` runs the parser as a single process.
 2. `parser/run_parallel.sh` runs multiple instances of the parser on a single machine.
-3. [Distribute](distribute/README.md) runs multiple instances of the parser on multiple machines.
-4. [Condor](condor/README.md) contains instructions on how th run the parser on the Condor cluster.
+3. [Distribute](tree/master/distribute) runs multiple instances of the parser on multiple machines.
+4. [Condor](tree/master/condor) contains instructions on how th run the parser on the Condor cluster.
 5. `parser/run.sh --` runs the parser as a REST service.
 
 ## [XML](http://github.com/hazyresearch/dd-genomics)
@@ -24,7 +24,7 @@ uses as input.
 
 An example of using an XML parser is contained in the dd-genomics project.
 
-## [Distribute](distribute/README.md)
+## [Distribute](tree/master/distribute)
 
 It is often desirable to run the parser on multiple machines on ec-2 or azure. Distribute contains tools to automatically provision machines, distribute data, perform parsing, and collect results.
 
