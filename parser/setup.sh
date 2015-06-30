@@ -13,16 +13,11 @@ else
 fi
 
 # java
-sudo add-apt-repository -y ppa:openjdk-r/ppa
-sudo apt-get update
-sudo apt-get install -y openjdk-8-jdk
+#sudo add-apt-repository -y ppa:openjdk-r/ppa
+#sudo apt-get update
+#sudo apt-get install -y openjdk-8-jdk
 
 # build parser
 cd $DIRNAME
 sbt/sbt stage
 
-# supervisor
-mkdir /opt/services/parser/logs
-sudo apt-get install -y supervisor
-sudo ln -s /opt/services/parser/conf/supervisor.conf /etc/supervisor/conf.d/parser.conf
-sudo service supervisor restart

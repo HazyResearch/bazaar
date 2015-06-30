@@ -21,4 +21,16 @@ You can run the NLP pipeline on 16 cores as follows:
 ./run_parallel.sh -in="input.json" --parallelism=16 -i json -k "item_id" -v "content"
 ```
 
+You can run the NLP pipeline as a REST service as follows:
+
+```bash
+./run.sh -p 8080
+```
+
 The output will be files in tsv-format that you can directly load into the database.
+
+
+## Setup
+
+This package requires Java 8. 
+
