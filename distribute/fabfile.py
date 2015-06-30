@@ -35,8 +35,10 @@ def install():
 @parallel
 def copy(input='test/input.json',batch_size=1000):
     ensure_hosts()
+    local('rm -rf segments')
     local('mkdir -p segments')
     local('split -a 5 -l ' + str(batch_size) + ' ' + input + ' segments/')
+    run('rm -rf ~/segments')
     run('mkdir -p ~/segments')
     num_machines = len(env.all_hosts)
     print(env.all_hosts)

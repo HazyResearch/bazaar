@@ -34,6 +34,8 @@ linux_image_name = 'b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-s
 container_name = 'bazaarctr'
 location = 'West US'
 
+AZURE_STORAGE_ACCOUNT = 'ddystorage'
+
 class AzureClient:
 
     def __init__(self):
@@ -111,8 +113,7 @@ class AzureClient:
 
     def _os_hd(self, image_name, target_container_name, target_blob_name):
         media_link = self._make_blob_url(
-            #//credentials.getStorageServicesName(),
-            'ddxstorage',
+            AZURE_STORAGE_ACCOUNT, 
             target_container_name, target_blob_name)
         os_hd = OSVirtualHardDisk(image_name, media_link,
             disk_label=target_blob_name)
@@ -123,15 +124,21 @@ class AzureClient:
             storage_account_name, container_name, blob_name)
 
     def create_storage(self):
-        name = 'ddxstorage'
+        name = AZURE_STORAGE_ACCOUNT #'ddxstorage'
         label = 'mystorageaccount'
         location = 'West US'
         desc = 'My storage account description.'
 
         result = self.sms.create_storage_account(name, desc, label, location=location)
 
-        operation_result = self.sms.get_operation_status(result.request_id)
-        print('Operation status: ' + operation_result.status)
+        self._wait_for_async(result.request_id)
+
+    def storage_account_exists(self, name):
+        try:
+            props = self.sms.get_storage_account_properties(name)
+            return props is not None
+        except:
+            return False
 
     def list_storage(self):
         result = self.sms.list_storage_accounts()
@@ -141,7 +148,7 @@ class AzureClient:
             print('')
 
     def delete_storage(self):
-        self.sms.delete_storage_account('mystorageaccount')
+        self.sms.delete_storage_account('ddxstorage')
 
     def list_role_sizes(self):
         result = self.sms.list_role_sizes()
@@ -149,7 +156,11 @@ class AzureClient:
             print('Name: ' + rs.name)
 
     def _wait_for_async(self, request_id):
-        self.sms.wait_for_operation_status(request_id, timeout=600)
+        try:
+           self.sms.wait_for_operation_status(request_id, timeout=600)
+        except azure.WindowsAzureAsyncOperationError as e:
+           from pprint import pprint
+           pprint (vars(e.result.error))
 
     def _wait_for_deployment(self, service_name, deployment_name,
     			  status='Running'):
@@ -237,10 +248,7 @@ class AzureClient:
         self._wait_for_role(AZURE_SERVICE_NAME, deployment_name, roles[0])
 
         for i in range(1, len(roles)):
-            system, os_hd, network = self._linux_role(roles[i], port='59914')
-            subnet_name = None
-            port = 2000 + i
-            network = self._network_config(subnet_name, port)
+            system, os_hd, network = self._linux_role(roles[i], port=str(2000+i))
 
             result = self.sms.add_role(AZURE_SERVICE_NAME, deployment_name, roles[i],
                 system, os_hd, network, role_size=AZURE_ROLE_SIZE)
@@ -269,11 +277,14 @@ def launch(argv):
     client = AzureClient()
     client.create_state_dir()
     client.create_hosted_service()
+    if not client.storage_account_exists(AZURE_STORAGE_ACCOUNT):
+        client.create_storage()
     client.create_deployment_and_roles(num_instances)
 
 def terminate():
     client = AzureClient()
     client.delete_hosted_service()
+    client.delete_storage()
 
 def usage():
     print("Usage: azure-client.py launch|terminate|role_sizes [OPTIONS]")

@@ -7,7 +7,7 @@
 export AZURE_SUBSCRIPTION_ID='baf18420-bac2-4745-891d-16e249928ce8'
 
 # name for service (must be unique among all azure users)
-export AZURE_SERVICE_NAME='ddbazaar'
+export AZURE_SERVICE_NAME='ddbazaa'
 
 # eg. 'Standard_D2', or 'Standard_D14'
 export AZURE_ROLE_SIZE='Standard_D2'
