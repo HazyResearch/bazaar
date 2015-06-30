@@ -7,7 +7,6 @@ finally terminates the machines.
 
 Before you begin, follow the instructions in [Setup](#setup) to install Distribute.
 
-
 1.  Launch instances on ec-2 or azure.
 
     ```bash
@@ -28,13 +27,13 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     You can provide additional parameters to override defaults:
 
     ```bash
-    fab copy:input=xml_parsed.json,batch_size=100    
+    fab copy:input=test/input.json,batch_size=1000
     ```
 
 4.  Run parser on remote machines
     ```bash
-    fab parse
-    ``` 
+    fab parse:parallelism=2,key_id='item_id',content_id='content'
+    ```
 
 5.  Collect results
     ```bash
@@ -47,7 +46,7 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     ```
     If termination is successful, the status information in `.state` will be deleted.
 
-Your parsed information should now be available as a tsv file in your working directory.
+Your parsed information should now be available as a tsv file named `result` in your working directory.
 
 ## Setup
 
@@ -102,4 +101,19 @@ Initialize by running
 ```
 source env_local.sh
 ````
+
+## Tips
+
+*  You can log into any of the launched nodes on ec-2 or azure:
+   ```
+   ssh -i ssh/bazaar.key -p PORT USER@HOST
+   ```
+   where USER, HOST, PORT are contained in `.state/HOSTS`.
+
+*  Test your distribution setup on smaller samples of your data,
+   and more basic instance types (eg. Standard_D2 for azure).
+   Then, when you are confident that everything works as expected,
+   choose a more powerful instance type (eg. Standard_D14 on azure),
+   and increase the parallelism in step 4 above (eg. 8 or 16).
+
 

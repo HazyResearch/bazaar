@@ -11,68 +11,20 @@ def is_installed(cmd):
         with hide('everything'):
             result = run('command -v ' + cmd)
             return result.return_code == 0
-    
-def install_git():
-    platform = get_platform()
-    with hide():
-        if platform == 'Darwin':
-            run('sudo brew -y install git')
-        if platform == 'Linux':
-            run('sudo apt-get -y install git')
-
-#def check_azure_credentials():
-#    CRED_FILE="conf/credentials.publishsettings"
-#    if not os.path.isfile(CRED_FILE):
-#        print "Cannot find azure credentials at $CRED_FILE. Aborting."
-#        print "You can download that file at "
-#        print "         https://manage.windowsazure.com/publishsettings"
-#        exit(1)
-#    print "Using credentials at %s" % CRED_FILE
-
-#def check_ec2_credentials():
-#    CRED_FILE=os.getenv("HOME") + "/.aws/credentials"
-#    if not os.path.isfile(CRED_FILE):
-#        print "Cannot find ec2 credentials at $CRED_FILE. Aborting."
-#        print "For more info, see "
-#        print "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
-#        exit(1)
-#    CONF_FILE=os.getenv("HOME") + "/.aws/config"
-#    if not os.path.isfile(CONF_FILE):
-#        print "Cannot find ec2 config file $CONF_FILE. Aborting."
-#        print "Make sure that the file contains the 'region' parameter. For more info, see "
-#        print "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
-#        exit(1)
 
 @task
 @hosts('localhost')
 def launch(cloud, num):
     if cloud == "azure":
-        #check_azure_credentials()
         local('./azure-client.py launch -n ' + num)
     if cloud == "ec-2" or cloud == "ec2":
-        #check_ec2_credentials()
         local('./ec2-client.py launch -n ' + num)
-
-
 
 @task 
 @parallel
 def install():
     ensure_hosts()
     platform = get_platform()
-    #if not is_installed('git'):
-    #    print('Node ' + env.host + ' does not have git installed!')
-    #    install_git()
-    #r = run('git clone https://github.com/hazyresearch/bazaar.git')
-    #if not r.return_code == 0:
-    #    print('ERROR. Aborting')
-    #    sys.exit()
-    #run('mkdir -p ~/parser')
-    #put(local_path='../parser', remote_path='~')
-    #r = run('cd ~/parser; chmod +x *.sh sbt/sbt; ./setup.sh')
-    #if not r.return_code == 0:
-    #    print('ERROR. Borting')
-    #    sys.exit()
     put(local_path='installer/install-parser', remote_path='~/install-parser')
     r = run('cd ~; chmod +x ~/install-parser; ./install-parser')
     if not r.return_code == 0:
@@ -81,7 +33,7 @@ def install():
 
 @task
 @parallel
-def copy(input='test/INPUT',batch_size=1000):
+def copy(input='test/input.json',batch_size=1000):
     ensure_hosts()
     local('mkdir -p segments')
     local('split -a 5 -l ' + str(batch_size) + ' ' + input + ' segments/')
@@ -108,10 +60,12 @@ def echo():
 
 @task
 @parallel
-def parse():
+def parse(parallelism=2, key_id='item_id', content_id='content'):
     ensure_hosts()
     with prefix('export PATH=~/jdk1.8.0_45/bin:$PATH'):
-        run('find ~/segments -name "*" -type f 2>/dev/null -print0 | xargs -0 -P 2 -L 1 bash -c \'cd ~/parser; ./run.sh -i json -k item_id -v content -f \"$0\"\'')
+        run('find ~/segments -name "*" -type f 2>/dev/null -print0 | xargs -0 -P ' + 
+          str(parallelism) + ' -L 1 bash -c \'cd ~/parser; ./run.sh -i json -k ' +
+          key_id + ' -v ' + content_id + ' -f \"$0\"\'')
 
 @task
 @parallel
