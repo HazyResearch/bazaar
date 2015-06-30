@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import botocore.session
 import errno
@@ -8,23 +8,21 @@ import shutil
 import sys
 import time
 
-
-# Expects the following environment variables
-#    AWS_ACCESS_KEY_ID='...'
-#    AWS_SECRET_ACCESS_KEY='...'
+EC2_INSTANCE_TYPE = os.environ.get('EC2_INSTANCE_TYPE')
+if not EC2_INSTANCE_TYPE:
+    print('EC2_INSTANCE_TYPE is not set.')
+    exit(1)
 
 AMI = 'ami-d05e75b8'
 USERNAME = 'ubuntu'
-INSTANCE_TYPE = 'm3.large'
-
 PUBLIC_KEY = 'ssh/bazaar.key.pub'
-
+REGION = 'us-east-1'
 
 class EC2Client:
 
     def __init__(self):
         self.session = botocore.session.get_session()
-        self.client = self.session.create_client('ec2', region_name='us-east-1')
+        self.client = self.session.create_client('ec2', region_name=REGION)
 
     def import_key_pair(self):
         with open(PUBLIC_KEY, "rb") as pubKeyFile:
@@ -70,7 +68,7 @@ class EC2Client:
             MaxCount=int(num),
             KeyName='bazaar',
             SecurityGroups=[ 'bazaar-group' ],
-            InstanceType=INSTANCE_TYPE, #'m3.large',
+            InstanceType=EC2_INSTANCE_TYPE, #'m3.large',
             BlockDeviceMappings=[ 
                 {
                     'VirtualName': 'ephemeral0',
@@ -108,9 +106,11 @@ class EC2Client:
                     num_pending = num_pending + 1
             if num_pending == 0:
                 break
-            print("Pending: %d" % num_pending)
-            time.sleep(1)
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            time.sleep(2)
 
+        print('')
         with open('.state/HOSTS', 'w') as f:
             for inst in response['Reservations'][0]['Instances']:
                 f.write(USERNAME + '@' + inst['PublicDnsName'] + ':22\n')
@@ -141,6 +141,7 @@ def launch(argv):
     for opt, arg in opts:
         if opt == '-n':
             num_instances = arg
+    print('Launching ' + str(num_instances) + ' instances on ec2')
     client = EC2Client()
     client.delete_key_pair()
     client.import_key_pair()

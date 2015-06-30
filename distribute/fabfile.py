@@ -20,38 +20,37 @@ def install_git():
         if platform == 'Linux':
             run('sudo apt-get -y install git')
 
-def check_azure_credentials():
-    CRED_FILE="conf/credentials.publishsettings"
-    if not os.path.isfile(CRED_FILE):
-        print "Cannot find azure credentials at $CRED_FILE. Aborting."
-        print "You can download that file at "
-        print "         https://manage.windowsazure.com/publishsettings"
-        exit(1)
-    print "Using credentials at %s" % CRED_FILE
+#def check_azure_credentials():
+#    CRED_FILE="conf/credentials.publishsettings"
+#    if not os.path.isfile(CRED_FILE):
+#        print "Cannot find azure credentials at $CRED_FILE. Aborting."
+#        print "You can download that file at "
+#        print "         https://manage.windowsazure.com/publishsettings"
+#        exit(1)
+#    print "Using credentials at %s" % CRED_FILE
 
-def check_ec2_credentials():
-    CRED_FILE=os.getenv("HOME") + "/.aws/credentials"
-    if not os.path.isfile(CRED_FILE):
-        print "Cannot find ec2 credentials at $CRED_FILE. Aborting."
-        print "For more info, see "
-        print "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
-        exit(1)
-    CONF_FILE=os.getenv("HOME") + "/.aws/config"
-    if not os.path.isfile(CONF_FILE):
-        print "Cannot find ec2 config file $CONF_FILE. Aborting."
-        print "Make sure that the file contains the 'region' parameter. For more info, see "
-        print "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
-        exit(1)
+#def check_ec2_credentials():
+#    CRED_FILE=os.getenv("HOME") + "/.aws/credentials"
+#    if not os.path.isfile(CRED_FILE):
+#        print "Cannot find ec2 credentials at $CRED_FILE. Aborting."
+#        print "For more info, see "
+#        print "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
+#        exit(1)
+#    CONF_FILE=os.getenv("HOME") + "/.aws/config"
+#    if not os.path.isfile(CONF_FILE):
+#        print "Cannot find ec2 config file $CONF_FILE. Aborting."
+#        print "Make sure that the file contains the 'region' parameter. For more info, see "
+#        print "       http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html"
+#        exit(1)
 
 @task
 @hosts('localhost')
 def launch(cloud, num):
-    print "Launching %s machines on %s" % (num, cloud)
     if cloud == "azure":
-        check_azure_credentials()
+        #check_azure_credentials()
         local('./azure-client.py launch -n ' + num)
     if cloud == "ec-2" or cloud == "ec2":
-        check_ec2_credentials()
+        #check_ec2_credentials()
         local('./ec2-client.py launch -n ' + num)
 
 
