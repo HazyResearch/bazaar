@@ -1,7 +1,7 @@
 Distribute
 ==========
 
-Run your parser on multiple machines in parallel. Distribute provisions machines
+Runs the [Parser](/parser) on multiple machines in parallel. Distribute provisions machines
 on ec-2 or azure, then processes chunks of your data on each machine, and
 finally terminates the machines.
 
@@ -63,6 +63,9 @@ source env/bin/activate
 wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 python get-pip.py
 pip install fabric
+pip install urltools
+pip install azure
+pip install botocore
 ```
 
 The fab command line tool should work now.
@@ -90,6 +93,13 @@ cd ..
 Edit `env_local.sh` as needed.
 
 For ec2, we recommend storing credentials at `~/.aws/credentials` following Amazon's recommendations.
+Make sure to `chmod 400 ~/.aws/credentials` and insert your access key and secret key:
+
+```
+[default]
+aws_access_key_id = 
+aws_secret_access_key = 
+```
 
 For azure, upload `ssh/mycert.cer` to the management portal via the "Upload" action of the "Settings" tab, and set the following variable in `env_local.sh`:
 ```

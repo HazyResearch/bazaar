@@ -6,9 +6,22 @@ import errno
 import getopt
 import os
 import shutil
+import subprocess
 import sys
 import time
 
+# read env_local.sh
+def source_env_local():
+    command = ['bash', '-c', 'source env_local.sh && env']
+    proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+    for line in proc.stdout:
+        (key, _, value) = line.rstrip().partition("=")
+        os.environ[key] = value
+    proc.communicate()
+
+source_env_local()
+
+# make sure we have required parameters
 AZURE_SUBSCRIPTION_ID = os.environ.get('AZURE_SUBSCRIPTION_ID')
 if not AZURE_SUBSCRIPTION_ID:
     print('AZURE_SUBSCRIPTION_ID is not set.')
@@ -24,17 +37,21 @@ if not AZURE_ROLE_SIZE:
     print('AZURE_ROLE_SIZE is not set.')
     exit(1)
 
+AZURE_STORAGE_ACCOUNT = os.environ.get('AZURE_STORAGE_ACCOUNT')
+if not AZURE_STORAGE_ACCOUNT:
+    print('AZURE_STORAGE_ACCOUNT is not set.')
+    exit(1)
+
 # management certificate
 AZURE_MGMT_CERT = 'ssh/mycert.pem'
+
 # service certificate
-cert_path='ssh/bazaar.pem'
+AZURE_SERVICE_PEM = 'ssh/bazaar.pem'
 
 # vm settings
 linux_image_name = 'b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB'
 container_name = 'bazaarctr'
 location = 'West US'
-
-AZURE_STORAGE_ACCOUNT = 'ddystorage'
 
 class AzureClient:
 
@@ -84,7 +101,7 @@ class AzureClient:
 
     def get_fingerprint(self):
         import hashlib
-        with open (cert_path, "r") as myfile:
+        with open (AZURE_SERVICE_PEM, "r") as myfile:
            data = myfile.readlines()
         lines = data[1:-1]
         all = ''.join([x.rstrip() for x in lines])
@@ -218,7 +235,7 @@ class AzureClient:
             print(img.name)
 
     def create_service_certificate(self):
-        with open(cert_path, "rb") as bfile:
+        with open(AZURE_SERVICE_PEM, "rb") as bfile:
             cert_data = base64.b64encode(bfile.read()).decode() 
             cert_format = 'pfx'
             cert_password = ''

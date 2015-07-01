@@ -4,9 +4,25 @@ import botocore.session
 import errno
 import getopt
 import os
+import pprint
 import shutil
+import socket
+import subprocess
 import sys
 import time
+import urlparse
+import urltools
+
+# read env_local.sh
+def source_env_local():
+    command = ['bash', '-c', 'source env_local.sh && env']
+    proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+    for line in proc.stdout:
+        (key, _, value) = line.rstrip().partition("=")
+        os.environ[key] = value
+    proc.communicate()
+
+source_env_local()
 
 EC2_INSTANCE_TYPE = os.environ.get('EC2_INSTANCE_TYPE')
 if not EC2_INSTANCE_TYPE:
@@ -92,7 +108,16 @@ class EC2Client:
                 ids.append(line.rstrip())
         return ids
 
+    def read_hosts(self):
+        hs = []
+        with open('.state/HOSTS', 'r') as f:
+            for line in f:
+                hs.append(line.rstrip())
+        return hs
+
     def wait_for_public_dns(self):
+        sys.stdout.write('Waiting for dns')
+        sys.stdout.flush()
         ids = self.read_instance_ids()
 
         response = None
@@ -118,6 +143,30 @@ class EC2Client:
             for inst in response['Reservations'][0]['Instances']:
                 f.write('/home/' + USERNAME + '\n')
  
+    def wait_for_ssh(self, hname, port):
+       count = 0
+       while not is_port_reachable(hname, port):
+            count = count + 1
+            if count > 120:
+                print('Timed out waiting for role instance status.')
+                exit(1)
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            time.sleep(2)
+
+    def wait_for_ssh_all(self):
+        sys.stdout.write('Waiting for ssh')
+        sys.stdout.flush()
+        hnames = self.read_hosts()
+        for h in hnames: 
+            ph = urltools.split_netloc(h)
+            hn = ph[2]
+            if ph[3] =='':
+                port = 22
+            else:
+                port = int(ph[3])
+            self.wait_for_ssh(hn, port)
+
     def terminate_instances(self):
         ids = self.read_instance_ids()
         response = self.client.terminate_instances(
@@ -133,6 +182,17 @@ class EC2Client:
                 print("Found existing .state dir. Please terminate instances first.")
                 exit(1)
             else: raise
+
+def is_port_reachable(hname, port):
+    reachable = False
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((hname, port))
+        reachable = True
+    except socket.error as e:
+        reachable = False
+    s.close()
+    return reachable
 
 def launch(argv):
     num_instances = 1
@@ -152,7 +212,8 @@ def launch(argv):
     client.create_security_group()
     client.run_instances(num_instances)
     client.wait_for_public_dns()
-    print('Note: it might still take a few minutes until instances become accessible.')
+    client.wait_for_ssh_all()
+    #print('Note: it might still take a few minutes until instances become accessible.')
 
 def terminate():
     client = EC2Client()
@@ -164,7 +225,16 @@ def usage():
     print("Usage: ec2-client.py launch|terminate [OPTIONS]")
     exit(1)
 
+def source_env_local():
+    command = ['bash', '-c', 'source env_local.sh && env']
+    proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+    for line in proc.stdout:
+        (key, _, value) = line.partition("=")
+        os.environ[key] = value
+    proc.communicate()
+
 def main(argv):
+    #source_env_local()
     if len(argv) < 1:
         usage()
     cmd = argv[0]

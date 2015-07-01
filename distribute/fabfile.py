@@ -67,9 +67,9 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
     ensure_hosts()
     directory = env.directories[env.host_string]
     with prefix('export PATH=~/jdk1.8.0_45/bin:$PATH'):
-        run('find ' + directory + '/segments -name "*" -type f 2>/dev/null -print0 | xargs -0 -P ' + 
-          str(parallelism) + ' -L 1 bash -c \'cd ~/parser; ./run.sh -i json -k ' +
-          key_id + ' -v ' + content_id + ' -f \"$0\"\'')
+        run('find ' + directory + '/segments -name "*" -type f 2>/dev/null -print0 | ' +
+          '(cd ~/parser && xargs -0 -P ' + str(parallelism) + ' -L1 bash -c \'./run.sh -i json -k ' +
+          key_id + ' -v ' + content_id + ' -f \"$0\"\')')
 
 @task
 @parallel
@@ -86,7 +86,7 @@ def collect():
            path = f 
            get(local_path='segments', remote_path=path)
        local('rm -f result')
-       local('find ./segments -name "*.parsed" -type f -print0 | xargs -P 1 -L 1 bash -c \'cat "$0" >> result\'')
+       local('find ./segments -name "*.parsed" -type f -print0 | xargs -0 cat >result')
        print('Done. You can now load the result into your database.')
 
 @task
