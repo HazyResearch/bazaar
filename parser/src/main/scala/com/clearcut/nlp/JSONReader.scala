@@ -27,7 +27,7 @@ class JSONReader(input:Source,
 
       val jsObj = Json.parse(line).asInstanceOf[JsObject]
 
-      val maybeDocumentId = jsObj.value.get(idKey).map(_.asInstanceOf[JsValue].toString)
+      val maybeDocumentId = jsObj.value.get(idKey).map(_.asInstanceOf[JsString].value)
       val maybeDocumentStr = jsObj.value.get(documentKey).map(_.asInstanceOf[JsString].value)
 
       (maybeDocumentId, maybeDocumentStr) match {
