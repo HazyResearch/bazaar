@@ -10,7 +10,7 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
 1.  Launch instances on ec-2 or azure.
 
     ```bash
-    fab launch:cloud='ec-2',num=1
+    fab launch:cloud=ec2,num=1
     ```
     This will launch 1 instance on ec-2. It will also put status information
     about the launched instance into `.state`.
@@ -24,16 +24,21 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     ```bash
     fab copy
     ```
-    You can provide additional parameters to override defaults:
-
+    Tip: You can provide additional parameters to override defaults:
     ```bash
     fab copy:input=test/input.json,batch_size=1000
     ```
 
 4.  Run parser on remote machines
     ```bash
+    fab parse
+    ```
+    
+    Tip: Again, you can provide additional parameters to override defaults:
+    ```bash
     fab parse:parallelism=2,key_id='item_id',content_id='content'
     ```
+    See [Parser](/parser) documentation for details.
 
 5.  Collect results
     ```bash
@@ -90,9 +95,10 @@ cd ..
 
 ### Set EC2 or Azure credentials
 
-Edit `env_local.sh` as needed.
+See variables in `env_local.sh` and override as needed.
 
-For ec2, we recommend storing credentials at `~/.aws/credentials` following Amazon's recommendations.
+For ec2, we recommend storing credentials at `~/.aws/credentials` following this 
+[documentation](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
 Make sure to `chmod 400 ~/.aws/credentials` and insert your access key and secret key:
 
 ```
@@ -103,15 +109,8 @@ aws_secret_access_key =
 
 For azure, upload `ssh/mycert.cer` to the management portal via the "Upload" action of the "Settings" tab, and set the following variable in `env_local.sh`:
 ```
-export AZURE_SUBSCRIPTION_ID='...'
+export AZURE_SUBSCRIPTION_ID=
 ```
-
-For each, ec2 and azure, you can set the instance types you would like to use in `env_local.sh`.
-
-After you are done, initialize the environment by running
-```
-source env_local.sh
-````
 
 ## Tips
 
@@ -120,6 +119,8 @@ source env_local.sh
    ssh -i ssh/bazaar.key -p PORT USER@HOST
    ```
    where USER, HOST, PORT are contained in `.state/HOSTS`.
+
+*  You can choose different instance types (see `env_local.sh`).
 
 *  Test your distribution setup on smaller samples of your data,
    and more basic instance types (eg. Standard_D2 for azure).
@@ -131,3 +132,7 @@ source env_local.sh
    in total. This means you can not launch more than one instance
    of type Standard_D14 (16 cores) at a time. You can submit a
    request to Microsoft to increase your quota of cores.
+
+*  In case of errors, make sure you stop running VMs through the
+   Azure management portal or AWS management console. You may have
+   to `rm -r .state` to continue using Distribute.
