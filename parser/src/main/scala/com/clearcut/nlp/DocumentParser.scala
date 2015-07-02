@@ -16,7 +16,11 @@ class DocumentParser(props: Properties) {
 
   def parseDocumentString(doc: String) = {
 
-    val document = new Annotation(doc)
+    // Temporary fix for bug where brackets are being incorrectly treated as punct
+    // and somehow this messes up the whole dep parse -> change them to round braces
+    val doc2 = doc.replaceAll("""\[""", "(").replaceAll("""\]""", ")")
+
+    val document = new Annotation(doc2)
     pipeline.annotate(document)
     // val dcoref = document.get(classOf[CorefChainAnnotation])
     val sentences = document.get(classOf[SentencesAnnotation])
