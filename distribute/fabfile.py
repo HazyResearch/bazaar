@@ -72,7 +72,6 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
           key_id + ' -v ' + content_id + ' -f \"$0\"\')')
 
 @task
-@parallel
 def collect():
     ensure_hosts()
     directory = env.directories[env.host_string]
@@ -86,7 +85,7 @@ def collect():
            path = f 
            get(local_path='segments', remote_path=path)
        local('rm -f result')
-       local('find ./segments -name "*.parsed" -type f -print0 | xargs -0 cat >result')
+       local('find ./segments -name "*.parsed" -type f -print0 | xargs -0 cat >>result')
        print('Done. You can now load the result into your database.')
 
 @task
