@@ -26,7 +26,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
     this.handleKeywordQuery(this.state.keywords);
   },
   getInitialState: function() {
-    return {data: [], extractors: []};
+    return {data: [], extractors: [], keywords: ''};
   },
   componentDidMount: function() {
     $.ajax({
@@ -182,7 +182,7 @@ var Result = React.createClass({displayName: "Result",
     }
     var extractions = []
     $.each(this.props.data._source, function(name, value) {
-      if (name != 'content' && name != 'id')
+      if (name != 'content' && name != 'id' && value instanceof Array)
         extractions.push (React.createElement("div", {className: "extraction"}, name, " : ", value.join(', ')));
     })
 
