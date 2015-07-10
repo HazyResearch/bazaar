@@ -12,7 +12,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/extractors', function(req, res, next) {
   client.search({
-    index: 'dd',
+    index: process.env.INDEX_NAME,
     type: 'extractors',
     body: {
       query: {
@@ -35,7 +35,7 @@ router.get('/docs', function(req, res, next) {
   var facets = req.query.facets
 
   var obj = {
-    index: 'dd',
+    index: process.env.INDEX_NAME, 
     type: 'docs',
     from: from,
     size: limit,

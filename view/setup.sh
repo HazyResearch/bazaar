@@ -12,6 +12,8 @@ source env/bin/activate
 
 # install python dependencies
 pip install elasticsearch
+pip install pyhocon
+pip install psycopg2
 
 # install node packages
 npm install

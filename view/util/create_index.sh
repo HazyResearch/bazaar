@@ -7,7 +7,10 @@ if [ $EXISTS ]; then
   curl -XDELETE 'http://localhost:9200/dd/'
 fi
 
-curl -XPOST localhost:9200/dd -d '{
+INDEX_NAME=view
+TYPE_DOCS_NAME=docs
+
+curl -XPOST localhost:9200/$INDEX_NAME -d '{
   "settings" : {
     "index" : {
       "number_of_shards" : 1
