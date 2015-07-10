@@ -8,44 +8,25 @@ import edu.stanford.nlp.dcoref.CorefChain.{CorefMention => StCorefMention}
 import edu.stanford.nlp.dcoref.CorefCoreAnnotations.CorefChainAnnotation
 import edu.stanford.nlp.dcoref.{CorefChain => StCorefChain, Dictionaries}
 import edu.stanford.nlp.ling.CoreAnnotations.{SentencesAnnotation, TokenBeginAnnotation}
-import edu.stanford.nlp.pipeline.{Annotation => StAnnotation, AnnotatorFactories, StanfordHelper}
+import edu.stanford.nlp.pipeline.{Annotation => StAnnotation, AnnotatorFactories}
 import edu.stanford.nlp.util.{CoreMap, IntPair, IntTuple}
 
 import scala.collection.JavaConversions.{asScalaBuffer, collectionAsScalaIterable}
 import scala.collection.mutable.ArrayBuffer
-//import com.readr.model.annotation.{CorefMention => CMention}
 
-class StanfordCoreferenceResolver extends Annotator(
-	generates = Array(classOf[Mentions], classOf[Coreferences]),
-	requires = Array(classOf[Text], classOf[TokenOffsets], classOf[Tokens], classOf[SentenceOffsets],
-		classOf[SentenceTokenOffsets],
-		classOf[Poss], classOf[NerTags], classOf[Parses], classOf[SentenceDependencies])) {
+class StanfordCoreferenceResolver extends Annotator[(Text,TokenOffsets,Tokens,SentenceOffsets,SentenceTokenOffsets,
+	Poss,NerTags,Parses,SentenceDependencies),(Mentions,Coreferences)] {
 
 	val properties = new Properties()
 
 	// make sure StanfordCoreNLP has parse annotator, which is needed by dcoref
-	//StanfordHelper.getAnnotator(properties, "parse")
-	//@transient lazy val stanfordAnnotator = StanfordHelper.getAnnotator(properties, "dcoref")
   @transient lazy val stanfordAnnotator =
-    AnnotatorFactories.coref(properties, StanfordHelper.getAnnotatorImplementations).create()
+    AnnotatorFactories.coref(properties, StanfordUtil.annotatorImplementations).create()
 
-	override def annotate(ins:AnyRef*):Array[AnyRef] = {
-		val t = run(
-			ins(0).asInstanceOf[Text],
-			ins(1).asInstanceOf[TokenOffsets],
-			ins(2).asInstanceOf[Tokens],
-			ins(3).asInstanceOf[SentenceOffsets],
-			ins(4).asInstanceOf[SentenceTokenOffsets],
-			ins(5).asInstanceOf[Poss],
-			ins(6).asInstanceOf[NerTags],
-			ins(7).asInstanceOf[Parses],
-			ins(8).asInstanceOf[SentenceDependencies])
-		Array(t._1, t._2)
-	}
-
-	def run(t:Text, toa:TokenOffsets, to:Tokens, soa:SentenceOffsets, stoa:SentenceTokenOffsets, posa:Poss, nerta:NerTags,
-					pa:Parses, sda:SentenceDependencies):(Mentions, Coreferences) = {
-		val stanAnn = new StAnnotation(t.text)
+	override def annotate(in:(Text,TokenOffsets,Tokens,SentenceOffsets,SentenceTokenOffsets,Poss,NerTags,Parses,
+		SentenceDependencies)):(Mentions, Coreferences) = {
+		val (t, toa, to, soa, stoa, posa, nerta, pa, sda) = in
+		val stanAnn = new StAnnotation(t)
     StanfordTokenizer.toStanford(t, toa, to, stanAnn)
     StanfordSentenceSplitter.toStanford(soa, stoa, stanAnn)
     StanfordPOSTagger.toStanford(posa, stanAnn)
@@ -64,8 +45,8 @@ object StanfordCoreferenceResolver {
   def toStanford(fromT:Text, fromO:TokenOffsets, fromS:SentenceTokenOffsets,
       fromM:Mentions, fromC:Coreferences, to:StAnnotation):Unit = {
 	val cm = new java.util.HashMap[Integer, StCorefChain]()
-	val mentions = fromM.mentions
-	for (c <- fromC.chains) {
+	val mentions = fromM
+	for (c <- fromC) {
 			
 	  val mentionMap = new java.util.HashMap[IntPair, Set[StCorefMention]]()
 	  var representative:StCorefMention = null
@@ -76,13 +57,13 @@ object StanfordCoreferenceResolver {
 	    // determine sentNum and sentHead
 	    var sentNum = 0
 	    var sentHead = -1
-	    while (sentHead == -1 && sentNum < fromS.sents.size) {
-	      if (fromS.sents(sentNum).f <= m.head && m.head < fromS.sents(sentNum).t) {
-	        sentHead = m.head - fromS.sents(sentNum).f
+	    while (sentHead == -1 && sentNum < fromS.size) {
+	      if (fromS(sentNum)(FROM) <= m.head && m.head < fromS(sentNum)(TO)) {
+	        sentHead = m.head - fromS(sentNum)(FROM)
 	      } else
 	        sentNum += 1
 	    }
-	    val mentionSpan = fromT.text.substring(fromO.tokens(m.tokenOffsets.f).f, fromO.tokens(m.tokenOffsets.t - 1).t)
+	    val mentionSpan = fromT.substring(fromO(m.tokenOffsets(FROM))(FROM), fromO(m.tokenOffsets(TO) - 1)(TO))
       sentNum += 1
 	    
 		val com = new StCorefMention(
@@ -90,8 +71,8 @@ object StanfordCoreferenceResolver {
 		  Dictionaries.Number.valueOf(Mention.numberFromByte(m.number)),
 		  Dictionaries.Gender.valueOf(Mention.genderFromByte(m.gender)),
 		  Dictionaries.Animacy.valueOf(Mention.animacyFromByte(m.animacy)),
-		  m.tokenOffsets.f - fromS.sents(sentNum).f +1,
-		  m.tokenOffsets.t - fromS.sents(sentNum).f +1, // -1??
+		  m.tokenOffsets(FROM) - fromS(sentNum)(FROM) +1,
+		  m.tokenOffsets(FROM) - fromS(sentNum)(FROM) +1, // -1??
 		  sentHead,
 		  c.chainNum,
 		  mentionNum,
@@ -154,7 +135,7 @@ object StanfordCoreferenceResolver {
 
 		ms += Mention(mentionNum,
 		  sentTokenBegin + m.headIndex-1,
-		  Offsets(sentTokenBegin + m.startIndex-1, sentTokenBegin + m.endIndex-1),
+		  Array(sentTokenBegin + m.startIndex-1, sentTokenBegin + m.endIndex-1),
 		  Mention.typeToByte(m.mentionType.name),
 		  Mention.numberToByte(m.number.name),
 		  Mention.genderToByte(m.gender.name),
@@ -181,7 +162,7 @@ object StanfordCoreferenceResolver {
       e.printStackTrace()
       println("error in fromStanf")
 	}
-    (Mentions(ms.toArray), Coreferences(cl.toArray))
+    (ms.toArray, cl.toArray)
   }
 }
 

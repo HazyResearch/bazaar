@@ -23,7 +23,7 @@ class TsvReader(in:String = null,
   var _next = fetchNext()
 
   override def getSchema:Schema =
-    Schema.createSchema(classOf[ID], classOf[Text])
+    Schema.createSchema("ID", "Text")
 
   override def hasNext: Boolean =
     _next != null
@@ -42,7 +42,7 @@ class TsvReader(in:String = null,
       if (tsvArr.length >= 2) {
         val documentId = tsvArr(0)
         val documentStr = tsvArr(1)
-        n = Array(ID(documentId), Text(documentStr))
+        n = Array(documentId, documentStr)
       } else {
         System.err.println(s"Warning: skipped malformed line ${num}: ${line}")
       }

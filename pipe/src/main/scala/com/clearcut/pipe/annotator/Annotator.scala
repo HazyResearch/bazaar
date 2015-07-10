@@ -1,18 +1,49 @@
 package com.clearcut.pipe.annotator
 
-class Annotator(
-                 val generates:Array[Class[_ <: AnyRef]],
-                 val requires:Array[Class[_ <: AnyRef]]) extends java.io.Serializable {
+import scala.reflect.runtime.universe._
+import com.clearcut.pipe.model._
 
-  def annotate(ins:AnyRef*):Array[AnyRef] = ???
+abstract class Annotator[In,Out](implicit inTag:TypeTag[In], outTag:TypeTag[Out])
+  extends java.io.Serializable {
+
+  def annotate(in:In):Out
 
   def init = {}
 
   def close = {}
 
-//  protected var reporter:ProgressReporter = null
-//
-//  protected def setProgressReporter(reporter:ProgressReporter) = {
-//    this.reporter = reporter
-//  }
+  def requires = inTypes
+
+  def generates = outTypes
+
+  val inTypes:Seq[String] = toTypes(inTag)
+  val outTypes:Seq[String] = toTypes(outTag)
+
+  private def toTypes[A](tag:TypeTag[A]):Seq[String] = {
+    if (tag.tpe <:< typeOf[Product])
+      tag.tpe.typeArgs.map(t => {
+        val s = t.toString
+        lowerFirst(s.substring(s.lastIndexOf(".") + 1))
+      }) else {
+      val s = tag.tpe.toString
+      Array(lowerFirst(s.substring(s.lastIndexOf(".") + 1)))
+    }
+  }
+
+  val inClazz = inTag.mirror.runtimeClass(inTag.tpe.typeSymbol.asClass)
+
+  def annotateUnsafe(in:AnyRef*):Seq[AnyRef] = {
+    var outTuple:Out = if (inTypes.size == 1) {
+      val inTuple = in(0).asInstanceOf[In]
+      annotate(inTuple)
+    } else {
+      val inTuple = inClazz.getConstructors.apply(0).newInstance(in:_*).asInstanceOf[In]
+      annotate(inTuple)
+    }
+    var outSeq = if (outTypes.size == 1)
+      Seq(outTuple.asInstanceOf[AnyRef])
+    else
+      outTuple.asInstanceOf[Product].productIterator.toSeq.asInstanceOf[Seq[AnyRef]]
+    outSeq
+  }
 }

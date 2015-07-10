@@ -27,7 +27,7 @@ class JsonReader(in:String,
   var _next = fetchNext()
 
   override def getSchema:Schema =
-    Schema.createSchema(classOf[ID], classOf[Text])
+    Schema.createSchema("ID", "Text")
 
   override def hasNext: Boolean =
     _next != null
@@ -51,7 +51,7 @@ class JsonReader(in:String,
         val documentId = (json \ idKey).extract[String]
         val documentStr = (json \ documentKey).extract[String]
 
-        n = Array(ID(documentId), Text(documentStr))
+        n = Array(documentId, documentStr)
 
       } catch {
         case e:Exception =>

@@ -42,7 +42,7 @@ object StanfordDependencyExtractor {
         psl += pl.toArray
       }
     }
-    SentenceDependencies(psl.toArray)
+    psl.toArray
   }
 
   def toStanford(depTyp:String, from:SentenceDependencies, to:StAnnotation):Unit = {
@@ -53,7 +53,7 @@ object StanfordDependencyExtractor {
       val toIndex = l.get(i).get(classOf[TokenEndAnnotation])
       val sntToks = toks.subList(fromIndex, toIndex)
 
-      val sg = toSemanticGraph(sntToks, from.sents(i))
+      val sg = toSemanticGraph(sntToks, from(i))
 
       depTyp match {
         case "DepCollapsed" =>

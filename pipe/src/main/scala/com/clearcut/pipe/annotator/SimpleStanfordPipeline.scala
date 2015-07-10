@@ -4,10 +4,8 @@ import edu.stanford.nlp.pipeline.{StanfordCoreNLP, Annotation}
 import java.util.Properties
 import com.clearcut.pipe.model._
 
-class SimpleStanfordPipeline extends Annotator(
-  generates = Array(classOf[SentenceOffsets], classOf[TokenOffsets], classOf[Tokens], classOf[Poss], classOf[NerTags],
-    classOf[Lemmas], classOf[SentenceDependencies]),
-  requires = Array(classOf[Text])) {
+class SimpleStanfordPipeline extends Annotator[(Text), (SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas,
+  SentenceDependencies)] {
 
   val props = new Properties()
   props.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
@@ -19,15 +17,10 @@ class SimpleStanfordPipeline extends Annotator(
 
   @transient lazy val pipeline = new StanfordCoreNLP(props)
 
-  override def annotate(ins:AnyRef*):Array[AnyRef] = {
-    val t = run(ins(0).asInstanceOf[Text])
-    Array(t._1, t._2)
-  }
-
-  def run(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies) = {
+  override def annotate(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies) = {
     // Temporary fix for bug where brackets are being incorrectly treated as punct
     // and somehow this messes up the whole dep parse -> change them to round braces
-    val text = t.text.replaceAll( """\[""", "(").replaceAll( """\]""", ")")
+    val text = t.replaceAll( """\[""", "(").replaceAll( """\]""", ")")
 
     val stanAnn = new Annotation(text)
     pipeline.annotate(stanAnn)

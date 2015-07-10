@@ -59,8 +59,8 @@ object Main extends App {
 
   val errors = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(conf.out + ".errors")))
 
-  val annotators:Array[Annotator] = conf.annotators.split(",").map (s =>
-      Class.forName("com.clearcut.pipe.annotator." + s.trim).newInstance().asInstanceOf[Annotator])
+  val annotators:Array[Annotator[_,_]] = conf.annotators.split(",").map (s =>
+      Class.forName("com.clearcut.pipe.annotator." + s.trim).newInstance().asInstanceOf[Annotator[_,_]])
 
   val reader:Reader = conf.formatIn match {
     case "column" => new ColumnReader(conf.in)
@@ -80,7 +80,7 @@ object Main extends App {
   reader.close
   errors.close
 
-  def run(annotators:Array[Annotator], reader:Reader, writer:Writer, errors:BufferedWriter) = {
+  def run(annotators:Array[Annotator[_,_]], reader:Reader, writer:Writer, errors:BufferedWriter) = {
     val schema = Schema.extendSchema(reader.getSchema, annotators)
     val indices = annotators.map(a => Schema.defaultAnnotationIndices(schema, a.requires))
     writer.setSchema(schema)
@@ -89,9 +89,10 @@ object Main extends App {
       var all = t
       for ((a, i) <- annotators.zip(indices)) {
         val input = i.map(index => all(index))
-        all = all ++ a.annotate(input:_*)
+        all = all ++ a.annotateUnsafe(input:_*)
       }
       writer.write(all)
     }
   }
+
 }

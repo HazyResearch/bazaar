@@ -23,7 +23,7 @@ class Server(port: Integer) {
 
       val lines = ListBuffer[String]()
 
-      val annotators:Array[Annotator] = Array(new SimpleStanfordPipeline)
+      val annotators:Array[Annotator[_,_]] = Array(new SimpleStanfordPipeline)
 
       val reader = new TsvReader(inSource = Source.fromString("id\t" + content.replace("\t", " ").replace("\n", " ") + "\n"))
       val baos = new ByteArrayOutputStream

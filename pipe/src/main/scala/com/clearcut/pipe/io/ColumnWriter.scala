@@ -1,12 +1,7 @@
 package com.clearcut.pipe.io
 
 import java.io.{File, OutputStreamWriter, FileOutputStream, BufferedWriter}
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read, write}
-import com.clearcut.pipe.model.{Util, Tokens}
+import com.clearcut.pipe.model._
 
 import com.clearcut.pipe.Schema
 
@@ -16,7 +11,7 @@ class ColumnWriter(dir:String) extends Writer {
 
   def setSchema(schema:Schema): Unit = {
     writers = schema.annTyps.map(t => {
-      val name = dir + "/ann." + Util.clazz2name(t)
+      val name = dir + "/ann." + lowerFirst(t)
       if (new File(name).exists)
         null
       else

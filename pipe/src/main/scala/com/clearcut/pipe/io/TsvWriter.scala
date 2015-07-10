@@ -18,12 +18,12 @@ class TsvWriter(out:String = null, outWriter:BufferedWriter = null) extends Writ
   val writer = if (outWriter != null) outWriter else
     new BufferedWriter(new OutputStreamWriter(new FileOutputStream(out), "utf-8"))
 
-  var indices:Array[Int] = null
+  var indices:Seq[Int] = null
 
   def setSchema(schema:Schema) = {
-    indices = Schema.defaultAnnotationIndices(schema, Array(classOf[ID], classOf[Text], classOf[SentenceOffsets],
-      classOf[SentenceTokenOffsets], classOf[Tokens], classOf[TokenOffsets], classOf[Lemmas], classOf[Poss],
-      classOf[NerTags], classOf[SentenceDependencies]))
+    indices = Schema.defaultAnnotationIndices(schema, Seq("ID", "Text", "SentenceOffsets",
+      "SentenceTokenOffsets", "Tokens", "TokenOffsets", "Lemmas", "Poss",
+      "NerTags", "SentenceDependencies"))
   }
 
   def write(annotations:Seq[AnyRef]) = {
@@ -39,22 +39,22 @@ class TsvWriter(out:String = null, outWriter:BufferedWriter = null) extends Writ
     val nertaga = is(8).asInstanceOf[NerTags]
     val sdepa = is(9).asInstanceOf[SentenceDependencies]
 
-    for (sentNum <- 0 until soa.sents.size) {
+    for (sentNum <- 0 until soa.size) {
       var columns = new Array[String](10)
 
-      val s_stoa = stoa.sents(sentNum)
+      val s_stoa = stoa(sentNum)
 
       val outline = List(
-        id.id,
+        id,
         sentNum.toString,
-        ta.text.substring(soa.sents(sentNum).f, soa.sents(sentNum).t),
-        list2TSVArray(toka.tokens.slice(s_stoa.f, s_stoa.t).toList),
-        list2TSVArray(la.lemmas.slice(s_stoa.f, s_stoa.t).toList),
-        list2TSVArray(posa.pos.slice(s_stoa.f, s_stoa.t).toList),
-        list2TSVArray(nertaga.tokens.slice(s_stoa.f, s_stoa.t).toList),
-        intList2TSVArray(toa.tokens.slice(s_stoa.f, s_stoa.t).map {_.f - soa.sents(sentNum).f }.toList),
-        list2TSVArray(sdepa.sents(sentNum).map(_.name).toList),
-        intList2TSVArray(sdepa.sents(sentNum).map(_.from).toList)
+        ta.substring(soa(sentNum)(FROM), soa(sentNum)(TO)),
+        list2TSVArray(toka.slice(s_stoa(FROM), s_stoa(TO)).toList),
+        list2TSVArray(la.slice(s_stoa(FROM), s_stoa(TO)).toList),
+        list2TSVArray(posa.slice(s_stoa(FROM), s_stoa(TO)).toList),
+        list2TSVArray(nertaga.slice(s_stoa(FROM), s_stoa(TO)).toList),
+        intList2TSVArray(toa.slice(s_stoa(FROM), s_stoa(TO)).map {_(FROM) - soa(sentNum)(FROM) }.toList),
+        list2TSVArray(sdepa(sentNum).map(_.name).toList),
+        intList2TSVArray(sdepa(sentNum).map(_.from).toList)
       )
       writer.append(outline.mkString("\t"))
       writer.newLine()

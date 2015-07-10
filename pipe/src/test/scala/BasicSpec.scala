@@ -2,7 +2,7 @@ import java.io.{BufferedWriter, OutputStreamWriter, FileOutputStream}
 import java.util.Properties
 import javax.swing.text.html.parser.DocumentParser
 
-import com.clearcut.pipe.annotator.{StanfordPOSTagger, StanfordTokenizer, StanfordSentenceSplitter, StanfordLemmatizer}
+import com.clearcut.pipe.annotator._
 import com.clearcut.pipe.{Schema, Main}
 import com.clearcut.pipe.io.{ColumnWriter, ColumnReader, Json}
 import com.clearcut.pipe.model.Text
@@ -19,7 +19,7 @@ class BasicSpec extends FlatSpec with Matchers {
   def createTextFile(dir:String) = {
     val w = new BufferedWriter(new OutputStreamWriter
       (new FileOutputStream(dir + "/ann.text")))
-    w.write(Json.write(Text("This is a very simple text file.\nIt contains two sentences.")))
+    w.write(Json.write("This is a very simple text file.\nIt contains two sentences."))
     w.close
   }
 
@@ -32,11 +32,11 @@ class BasicSpec extends FlatSpec with Matchers {
 
     createTextFile(dir.toString)
 
-    val annotators = Array(
+    val annotators:Array[Annotator[_,_]] = Array(
       new StanfordTokenizer,
       new StanfordSentenceSplitter,
-      new StanfordPOSTagger,
-      new StanfordLemmatizer
+      new StanfordPOSTagger
+      //new StanfordLemmatizer
     )
 
     val r = new ColumnReader(dir.toString)
