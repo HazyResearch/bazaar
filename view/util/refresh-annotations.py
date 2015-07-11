@@ -2,61 +2,78 @@
 
 ES_HOST = {"host" : "localhost", "port" : 9200}
 INDEX_NAME = 'view'
-TYPE_EXTRACTORS_NAME = 'extractors'
-TYPE_EXTRACTIONS_NAME = 'extractions'
+TYPE_ANNOTATORS_NAME = 'annotators'
+TYPE_ANNOTATIONS_NAME = 'annotations'
+N = 1000
 
 from pyhocon import ConfigFactory
 from elasticsearch import Elasticsearch
 import json
-import psycopg2
-import psycopg2.extras
 import sys
 
 conf = ConfigFactory.parse_file('../view.conf')
 
-annotations = conf.get_list('view.annotations')
+conf_annotations = conf.get_list('view.annotations')
 
 es = Elasticsearch(hosts = [ES_HOST])
 
-def index_extractors():
-  es.delete_by_query(index = INDEX_NAME, doc_type = TYPE_EXTRACTORS_NAME, body = {
+# create a small table that only contains the names of all available extractors
+def index_annotators():
+  es.delete_by_query(index = INDEX_NAME, doc_type = TYPE_ANNOTATORS_NAME, body = {
       "query": {
         "match_all": {}
       }
   })
-  for ann in annotations:
-    es.index(index = INDEX_NAME, doc_type = TYPE_EXTRACTORS_NAME, body = {
+  for ann in conf_annotations:
+    es.index(index = INDEX_NAME, doc_type = TYPE_ANNOTATORS_NAME, body = {
       "name" : ann.get('name')
     }, refresh = False)
   es.indices.refresh(index = INDEX_NAME)
 
-def index_extractions():
-  es.delete_by_query(index = INDEX_NAME, doc_type = TYPE_EXTRACTIONS_NAME, body = {
+# create a large table that contains all extractions
+def index_annotations():
+  es.delete_by_query(index = INDEX_NAME, doc_type = TYPE_ANNOTATIONS_NAME, body = {
       "query": {
         "match_all": {}
       }
   })
-  dbconf = conf.get('view.database.default')
-  conn_string = "host='%s' dbname='%s' user='%s' password='%s'" % (
-    dbconf.get('host'),
-    dbconf.get('dbname'),
-    dbconf.get('user'),
-    dbconf.get('password'))
-  conn = psycopg2.connect(conn_string)
-  for ann in annotations:
-	cursor = conn.cursor('ann_cursor', cursor_factory=psycopg2.extras.DictCursor)
-	cursor.execute('SELECT * FROM %s' % (ann.get('table')))
-	row_count = 0
-	for row in cursor:
-		row_count += 1
-		print "row: %s    %s\n" % (row_count, row)
+  for ann in conf_annotations:
+    # read from file
 
-        #es.index(index = INDEX_NAME, doc_type = TYPE_EXTRACTIONS_NAME, body = {
-        #   "name" : "genepheno"
-        # }, refresh = False)
-        #  es.indices.refresh(index = INDEX_NAME)
+    # bulk index docs
+    bulk_data = []
+    for l in open('../' + ann.get('input')):
+        o = json.loads(l)
+        # {"id": "12", "range":{"type":"sentenceTokenSpan","doc_id":"doc123","sentNum":0,"f":3,"t":4},"target":{"entity":"something"}}
+        o['attribute'] = ann.get('name')
+        op_dict = {
+            "index": {
+                "_index": INDEX_NAME,
+                "_type": TYPE_ANNOTATIONS_NAME,
+                "_id": o['id'],
+                "_parent": o['range']['doc_id']
+            }
+        }
+        #data_dict = {
+        #    "id": id,
+        #    "content": content,
+        #    "tokenOffsets": tokenOffsets
+        #}
+        #o['content'] = o[u'text']
+        data_dict = o
+        #print(op_dict)
+        #print(data_dict)
+        bulk_data.append(op_dict)
+        bulk_data.append(data_dict)
+        if len(bulk_data) > N:
+            res = es.bulk(index = INDEX_NAME, body = bulk_data, refresh = False)
+            bulk_data = []
 
-index_extractors()
-index_extractions()
+    if len(bulk_data) > 0:
+        res = es.bulk(index = INDEX_NAME, body = bulk_data, refresh = False)
 
-print(annotations)
+    es.indices.refresh(index = INDEX_NAME)
+
+index_annotators()
+index_annotations()
+

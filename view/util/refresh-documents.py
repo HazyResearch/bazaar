@@ -14,7 +14,7 @@ import sys
 
 conf = ConfigFactory.parse_file('../view.conf')
 
-cd = conf.get('view.docs')
+docs_conf = conf.get('view.docs')
 
 es = Elasticsearch(hosts = [ES_HOST])
 
@@ -28,13 +28,11 @@ def index_docs():
     })
 
     # bulk index docs
-    for o in pipe.col_open('../data/pipe'):
-        bulk_data = []
-        print()
-        print(o)
-        id = o[u'id'][u'id'] 
-        content = o[u'text'][u'text']
-        tokenOffsets = o[u'tokenOffsets'][u'tokens']
+    bulk_data = []
+    for o in pipe.col_open('../' + docs_conf.get('input')):
+        id = o[u'id']
+        content = o[u'text']
+        tokenOffsets = o[u'tokenOffsets']
 
         op_dict = {
             "index": {
@@ -43,11 +41,13 @@ def index_docs():
                 "_id": id
             }
         }
-        data_dict = {
-            "id": id,
-            "content": content,
-            "tokenOffsets": tokenOffsets
-        }
+        #data_dict = {
+        #    "id": id,
+        #    "content": content,
+        #    "tokenOffsets": tokenOffsets
+        #}
+        o['content'] = o[u'text']
+        data_dict = o
         bulk_data.append(op_dict)
         bulk_data.append(data_dict)
         if len(bulk_data) > N:

@@ -32,25 +32,27 @@ def write_docs():
     cursor = conn.cursor('ann_cursor', cursor_factory=psycopg2.extras.DictCursor)
     cursor.execute(docs.get('sql.query'))
 
-    with pipe.col_open_w('../data/sentences', [ 'id', 'text', 'tokenOffsets' ]) as w:
+    with pipe.col_open_w('../data/sentences', [ 'id', 'text', 'tokenOffsets', 'sentenceTokenOffsets', 'sentenceOffsets', 'lemmas', 'poss' ]) as w:
       sent_num = 0
       prev_document_id = None
       for row in cursor:
           # id
-          document_id = str(row[0])
-          if document_id != prev_document_id:
-              sent_num = 0
-          id = document_id + '__' + str(sent_num)
-        
-          # text
+          #document_id = str(row[0])
+          #if document_id != prev_document_id:
+          #    sent_num = 0
+          #id = document_id + '@' + str(sent_num)
+          id = row[0]
+ 
           text = row[1]
-
-          # token offsets
           token_offsets = find_token_offsets(text)
+          sentence_token_offsets = [[0,len(token_offsets)]]
+          sentence_offsets = [[0, len(text)]]
+          lemmas = row[2]
+          pos_tags = row[3]
 
-          w.write([id, text, token_offsets])
+          w.write([id, text, token_offsets, sentence_token_offsets, sentence_offsets, lemmas, pos_tags])
 
-          prev_document_id = document_id
+          #prev_document_id = document_id
           sent_num = sent_num + 1
 
 write_docs()

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # exists
-HEAD=$(curl -s -XHEAD -i 'http://localhost:9200/dd')
+HEAD=$(curl -s -XHEAD -i 'http://localhost:9200/view')
 [ "${HEAD:0:15}" == "HTTP/1.1 200 OK" ] && EXISTS=1
 if [ $EXISTS ]; then
-  curl -XDELETE 'http://localhost:9200/dd/'
+  curl -XDELETE 'http://localhost:9200/view/'
 fi
 
 INDEX_NAME=view
@@ -28,6 +28,13 @@ curl -XPOST localhost:9200/$INDEX_NAME -d '{
     }
   },
   "mappings" : {
+    "annotations" : {
+      "_source" : { "enabled" : true },
+      "_parent" : {
+          "type" : "docs"
+       },
+      "properties" : {}
+    },
     "docs" : {
       "_source" : { "enabled" : true },
       "properties" : {
@@ -42,6 +49,11 @@ curl -XPOST localhost:9200/$INDEX_NAME -d '{
             "norms" : {
                "enabled" : false
             }
+          },
+          "text" : {
+            "type" : "string",
+            "term_vector" : "with_positions_offsets",
+            "index_analyzer" : "fulltext_analyzer"
           },
           "extr1" : {
             "type" : "string",

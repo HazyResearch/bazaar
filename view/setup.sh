@@ -32,3 +32,8 @@ cd ..
 # for development, we would like to enable auto-reload
 sudo npm i nodemon -g
 sudo npm install -g react-tools
+
+cd public
+git clone https://github.com/google/closure-library
+
+

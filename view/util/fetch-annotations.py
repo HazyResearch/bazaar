@@ -8,7 +8,7 @@ import sys
 
 conf = ConfigFactory.parse_file('../view.conf')
 
-annotations = conf.get_list('view.annotations')
+conf_annotations = conf.get_list('view.annotations')
 
 def write_annotations():
     # write extractions to json file
@@ -19,13 +19,18 @@ def write_annotations():
         dbconf.get('user'),
         dbconf.get('password'))
     conn = psycopg2.connect(conn_string)
-    for ann in annotations:
+    for ann in conf_annotations:
+      with open('../' + ann.get('input'), 'w') as w:
         cursor = conn.cursor('ann_cursor', cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute(ann.get('sql.query'))
         for row in cursor:
-            print(row)
-
+            #print(row)
+            # TODO: must write into the following format
+            # each row:
+            # {"range":{"type":"sentenceTokenSpan","doc_id":"doc123","sentNum":0,"f":3,"t":4},"target":{"entity":"something"}}
+            # save in file using w.write
+            obj = {"id":row[0], "range":{"type":"sentenceTokenSpan","doc_id":row[1],"sentNum":0,"f":row[2],"t":int(row[3])},"target":{"entity":row[4]}}
+            w.write(json.dumps(obj))
+            w.write('\n')
 
 write_annotations()
-
-#print(annotations)

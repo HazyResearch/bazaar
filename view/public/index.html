@@ -6,11 +6,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="closure-library/closure/goog/base.js"></script>
+    <script>
+goog.require('goog.dom');
+goog.require('goog.dom.classes');
+goog.require('goog.array');
+goog.require('goog.dom.Range');
+goog.require('goog.editor.range.Point');
+
+    </script>
     <link rel="stylesheet" type="text/css" href="css/main.css" />
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
   </head>
-  <body class="unselectable">
+  <body class="unselectable"  onload="">
     <div id="page"></div>
     <script type="text/jsx" src="js/main.js"></script>
+    <script type="text/jsx" src="js/vis.js"></script>
   </body>
 </html>

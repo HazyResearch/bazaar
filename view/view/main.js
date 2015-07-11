@@ -1,7 +1,20 @@
 
+
 var SearchPage = React.createClass({
   notify: function(msg) {
 
+  },
+  handleAnnotationsQuery: function(doc_ids, docs, keywords) {
+     $.ajax({
+       url: 'annotations?doc_ids=' + encodeURIComponent(doc_ids),
+       success: function(data) {
+         this.setState({data: docs, keywords:keywords, annotations:data});
+         //this.setState({annotations:data});
+       }.bind(this),
+       error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+       }.bind(this)
+     });
   },
   handleKeywordQuery: function(keywords) {
     facets = []
@@ -12,7 +25,9 @@ var SearchPage = React.createClass({
       url: 'docs?keywords=' + encodeURIComponent(keywords) + 
             '&facets=' + facets.join(),
       success: function(data) {
-        this.setState({data: data, keywords:keywords});
+        //this.setState({data: data, keywords:keywords, annotations:this.state.annotations});
+        var doc_ids = data.map(function(r) { return r['_id']})
+        this.handleAnnotationsQuery(doc_ids, data, keywords)
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -25,12 +40,9 @@ var SearchPage = React.createClass({
         value.active = active; });
     this.handleKeywordQuery(this.state.keywords);
   },
-  getInitialState: function() {
-    return {data: [], extractors: [], keywords: ''};
-  },
-  componentDidMount: function() {
+  handleLoadExtractors: function() {
     $.ajax({
-      url: 'extractors',
+      url: 'annotators',
       success: function(data) {
         // add a field to represent active/non-active
         extractors = data.map(function(it) {
@@ -48,6 +60,13 @@ var SearchPage = React.createClass({
       }.bind(this)
     });
   },
+  getInitialState: function() {
+    return {data: [], extractors: [], keywords: '', annotations:[]};
+  },
+  componentDidMount: function() {
+    this.handleLoadExtractors()
+    this.handleKeywordQuery('')
+  },
   render: function() {
     return (
       <div>
@@ -56,7 +75,8 @@ var SearchPage = React.createClass({
         <Content style={{'height':'100%'}} 
           data={this.state.data} 
           extractors={this.state.extractors} 
-          onFacetChange={this.handleFacetChange} />
+          onFacetChange={this.handleFacetChange}
+          annotations={this.state.annotations} />
       </div>
     );
   }
@@ -111,7 +131,7 @@ var Content = React.createClass({
       <div className='content'>
         <LeftMenu extractors={this.props.extractors}
           onFacetChange={this.props.onFacetChange} />
-        <Results data={this.props.data}/>
+        <Results data={this.props.data} annotations={this.props.annotations}/>
         <Help />
       </div>
       );
@@ -139,8 +159,8 @@ var Facet = React.createClass({
   },
   render: function() {
     var classes = 'facet';
-    if (this.props.data.active)
-      classes += ' facet-active';
+    if (!this.props.data.active)
+      classes += ' facet-inactive';
     return (<div className={classes} onClick={this.handleClick}>
        <div style={{display:'inline-block',width:'30px'}}>
          <i className="fa fa-check" ></i>
@@ -157,9 +177,19 @@ var Help = React.createClass({
 
 var Results = React.createClass({
   render: function() {
+    var docAnnotations = {}
+    this.props.data.map(function(result) { docAnnotations[result['_id']] = [] });
+
+    this.props.annotations.map(function(a) {
+      var src = a['_source']
+      var docId = src['range']['doc_id']
+      if (docId in docAnnotations) {
+        docAnnotations[docId].push(src)
+      }
+    })
     var resultNodes = this.props.data.map(function(result) {
       return (
-        <Result data={result} />
+        <Result data={result} annotations={docAnnotations[result['_id']]} />
         );
     });
     return (<div style={{marginLeft:'200px', marginRight:'200px'}}>
@@ -170,32 +200,32 @@ var Results = React.createClass({
 })
 
 var Result = React.createClass({
-  findArgs: function(snt) {
-   //TODO    
+  getInitialState: function() {
+   return {layers: [
+     { name: "Tokens", active: false },
+     { name: "Sentences", active: false },
+     { name: "Lemmas", active: false },
+     { name: "PartOfSpeech", active: false },
+     { name: "Extractors", active: true },
+     { name: "Details", active: false },
+     ]};
+  },
+  onLayerChange: function(name, active) {
+    $.each(this.state.layers, function(index, value) {
+      if (value.name == name)
+        value.active = active; 
+    })
+    if (this.isMounted()) {
+      this.setState({layers:this.state.layers}); 
+    }
   },
   render: function() {
-    content = this.props.data._source.content;
-    // if we have field with keyword highlighting, take that
-    if (this.props.data.highlight != null &&
-        this.props.data.highlight.content != null) {
-      content = this.props.data.highlight.content[0];
-    }
-    var extractions = []
-    $.each(this.props.data._source, function(name, value) {
-      if (name != 'content' && name != 'id' && value instanceof Array)
-        extractions.push (<div className='extraction'>{name} : {value.join(', ')}</div>);
-    })
-
     return (<div className='result'>
-             <div>
-          <span dangerouslySetInnerHTML={{__html: content}} />
-             </div>
-             {extractions}
+          <TextWithAnnotations data={this.props.data} layers={this.state.layers} annotations={this.props.annotations} />
+          <AnnotationsSelector layers={this.state.layers} onLayerChange={this.onLayerChange} />
       </div>);
   }  
 })
-
-
 
 
 React.render(

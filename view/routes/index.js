@@ -10,10 +10,10 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express3' });
 });
 
-router.get('/extractors', function(req, res, next) {
+router.get('/annotators', function(req, res, next) {
   client.search({
     index: process.env.INDEX_NAME,
-    type: 'extractors',
+    type: 'annotators',
     body: {
       query: {
         'match_all': {}
@@ -27,6 +27,40 @@ router.get('/extractors', function(req, res, next) {
     next(err);
   });
 });
+
+router.get('/annotations', function(req, res, next) {
+  var doc_ids = []
+  var doc_ids_str = req.param('doc_ids')
+  if (doc_ids_str) doc_ids = doc_ids_str.split(',') 
+
+  var obj = {
+    index: process.env.INDEX_NAME,
+    type: 'annotations',
+    body: {
+      "query" : {
+        "has_parent": {
+          "type": "docs", 
+          "query": {
+            "ids" : {
+              "values" : doc_ids
+            }
+          }
+        }
+      }
+    }
+  }
+
+  client.search(
+   obj
+  ).then(function (body) {
+    var hits = body.hits.hits;
+    res.send(hits)
+  }, function (err) {
+    console.trace(err.message);
+    next(err)
+  });
+});
+
 
 router.get('/docs', function(req, res, next) {
   var from = req.param('from', 0)
@@ -67,7 +101,15 @@ router.get('/docs', function(req, res, next) {
     var filters = []
     for (var i=0; i < l.length; i++)
       filters.push({
-        "exists" : { "field" : l[i] }
+        //"exists" : { "field" : l[i] }
+        "has_child" : {
+           "type" : "annotations",
+           "query" : {
+              "term" : {
+                "attribute" : l[i]
+              }
+           }
+        }
       });
 
     if (filters.length > 1)
