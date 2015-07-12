@@ -276,21 +276,15 @@ var LemmasVisualization = function(element, source) {
 // }
 
 var ExtractorsVisualization = function(element, source, annotations) {
-	console.log(source)
    var sentenceTokenOffsets = source['sentenceTokenOffsets']
    var tokenOffsets = source['tokenOffsets']
    var extractorOffsets = []
 
-   console.log(tokenOffsets)
-   //console.log(sentenceTokenOffsets)
    $.each(annotations, function(i, a) {
-   	  console.log(a)
    	  var sentNum = a.range.sentNum
    	  var sentenceBeginToken = sentenceTokenOffsets[sentNum][0]
    	  var tokenFrom = sentenceBeginToken + a.range.f
    	  var tokenTo = sentenceBeginToken + a.range.t
-   	  console.log(tokenFrom)
-   	  console.log(a.range.f + ' ' + a.range.t)
       var charFrom = tokenOffsets[tokenFrom][0]
       var charTo = tokenOffsets[tokenTo - 1][1]
       extractorOffsets.push([charFrom,charTo])
@@ -305,10 +299,19 @@ var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
 
   componentDidMount: function() {
   	this.vis = {}
+  	this.buildCustomDom()
   },
   componentDidUpdate: function() {
+  	this.buildCustomDom()
+  },
+  buildCustomDom: function() {
     var div = React.findDOMNode(this)
-    var annotations = this.props.annotations
+    //cleanup existing visualizations
+    $.each(this.vis, function(k,v) { v.destroy() })
+
+  	this.vis = {}
+
+    var annotations = this.props.data.annotations
     var sourceData = this.props.data._source
     var vis = this.vis
 
@@ -328,17 +331,9 @@ var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
         		vis[l.name] = new SentencesVisualization(div, sourceData)
         	if (l.name == 'Extractors')
         		vis[l.name] = new ExtractorsVisualization(div, sourceData, annotations)
-
         }
     })
-
-
-    //var tokensVis = new TokensVisualization(div, sourceData)
   },
-  componentWillReceiveProps:function(nextProps) {
-     console.log(nextProps)
-  },
-
   isActive: function(name) {
   	var isActive = false
     $.each(this.props.layers, function(i, l) {
@@ -348,48 +343,28 @@ var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
   },
 
   render: function() {
-
     content = this.props.data._source.content;
     // if we have field with keyword highlighting, take that
     if (this.props.data.highlight != null &&
         this.props.data.highlight.content != null) {
       content = this.props.data.highlight.content[0];
     }
-    var extractions = []
+    var details = []
     if (this.isActive('Details')) {
 	    $.each(this.props.data._source, function(name, value) {
-	      if (name != 'content' && name != 'id' && value instanceof Array)
-	        extractions.push (React.createElement("div", {className: "extraction"}, name, " : ", JSON.stringify(value), " "));
+	      if (name != 'content' && name != 'id')
+	        details.push (React.createElement("div", {className: "extraction"}, name, " : ", JSON.stringify(value), " "));
 	    })
 
-	    $.each(this.props.annotations, function(i, value) {
-	    	extractions.push(React.createElement("div", {className: "extractionBlue"}, JSON.stringify(value), " "));
+	    $.each(this.props.data.annotations, function(i, value) {
+	    	details.push(React.createElement("div", {className: "extractionBlue"}, JSON.stringify(value), " "));
 	    })
 	}
 
-
-    // create some div
-    //var div = (<div>{this.props.data._source['text']}</div>)
-
-    // return (<div className='result'>
-    //          <div>
-    //       <span dangerouslySetInnerHTML={{__html: content}} />
-    //          </div>
-    //          {extractions}
-    //       <TextWithAnnotations data={this.props.data} layers={this.state.layers} annotations={this.props.annotations} />
-    //       <AnnotationsSelector layers={this.state.layers} onLayerChange={this.onLayerChange} />
-    //   </div>);
     var div = (React.createElement("div", null, React.createElement("span", {dangerouslySetInnerHTML: {__html: content}}), 
-        extractions
+        React.createElement("br", null), React.createElement("div", {style: {'color':'green'}}, this.props.data._id), 
+        details
     	))
-
-    //TokensVisualization.apply(div)
-    // add text
-    // now apply visualizations as desired
-
-    // return final div
-
-    // perhaps override shouldComponentUpdate() (?)
 
     return div;
   }

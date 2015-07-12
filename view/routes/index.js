@@ -36,6 +36,8 @@ router.get('/annotations', function(req, res, next) {
   var obj = {
     index: process.env.INDEX_NAME,
     type: 'annotations',
+    from: 0,
+    size: 100000,
     body: {
       "query" : {
         "has_parent": {
@@ -62,11 +64,12 @@ router.get('/annotations', function(req, res, next) {
 });
 
 
+
 router.get('/docs', function(req, res, next) {
   var from = req.param('from', 0)
   var limit = req.param('limit', 100)
-  var keywords = req.query.keywords
-  var facets = req.query.facets
+  var keywords = req.query.keywords || ''
+  var facets = req.query.facets || ''
 
   var obj = {
     index: process.env.INDEX_NAME, 
@@ -120,11 +123,56 @@ router.get('/docs', function(req, res, next) {
       obj.body.filter = filters[0]
   }
 
-  client.search(
-   obj
-  ).then(function (body) {
-    var hits = body.hits.hits;
-    res.send(hits)
+  client.search(obj).then(function (body) {
+    var docs = body.hits.hits;
+   
+    // we now have the documents, run another query to get all annotations on
+    // these documents 
+    var doc_ids = new Array(docs.length)
+    for (var i=0, ii = docs.length; i < ii; i++)
+      doc_ids[i] = docs[i]._id
+
+    var obj = {
+      index: process.env.INDEX_NAME,
+      type: 'annotations',
+      from:0,
+      size:100000,
+      body: {
+        "query" : {
+          "has_parent": {
+            "type": "docs",
+            "query": {
+              "ids" : {
+                "values" : doc_ids
+              }
+            }
+          }
+        }
+      }
+    }
+    client.search(obj).then(function(body) {
+      var hits = body.hits.hits
+      // build a little index of the annotations
+      var id2ann = {}
+      for (var i = 0, ii = hits.length; i < ii; i++) {
+        var id = hits[i]._source.range.doc_id
+        if (id in id2ann)
+          id2ann[id].push(hits[i]._source)
+        else
+          id2ann[id] = [hits[i]._source]
+      }
+      // add to docs
+      for (var i=0, ii = docs.length; i < ii; i++) {
+        docs[i].annotations = id2ann[docs[i]._id] || []
+      } 
+      res.send(docs) 
+    }, function(err) {
+      console.trace(err.message);
+      next(err)
+    });
+    
+    //res.send(hits)
+
   }, function (err) {
     console.trace(err.message);
     next(err)

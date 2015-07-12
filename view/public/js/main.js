@@ -4,18 +4,20 @@ var SearchPage = React.createClass({displayName: "SearchPage",
   notify: function(msg) {
 
   },
-  handleAnnotationsQuery: function(doc_ids, docs, keywords) {
-     $.ajax({
-       url: 'annotations?doc_ids=' + encodeURIComponent(doc_ids),
-       success: function(data) {
-         this.setState({data: docs, keywords:keywords, annotations:data});
-         //this.setState({annotations:data});
-       }.bind(this),
-       error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-       }.bind(this)
-     });
-  },
+  // handleAnnotationsQuery: function(doc_ids, docs, keywords) {
+  //    $.ajax({
+  //      url: 'annotations?doc_ids=' + encodeURIComponent(doc_ids),
+  //      success: function(data) {
+  //        console.log('got annotations')
+  //        console.log(data)
+  //        this.setState({data: docs, keywords:keywords, annotations:data});
+  //        //this.setState({annotations:data});
+  //      }.bind(this),
+  //      error: function(xhr, status, err) {
+  //       console.error(this.props.url, status, err.toString());
+  //      }.bind(this)
+  //    });
+  // },
   handleKeywordQuery: function(keywords) {
     facets = []
     $.each(this.state.extractors, function(index, value) {
@@ -25,9 +27,9 @@ var SearchPage = React.createClass({displayName: "SearchPage",
       url: 'docs?keywords=' + encodeURIComponent(keywords) + 
             '&facets=' + facets.join(),
       success: function(data) {
-        //this.setState({data: data, keywords:keywords, annotations:this.state.annotations});
-        var doc_ids = data.map(function(r) { return r['_id']})
-        this.handleAnnotationsQuery(doc_ids, data, keywords)
+        this.setState({data: data, keywords:keywords});
+        // var doc_ids = data.map(function(r) { return r['_id']})
+        // this.handleAnnotationsQuery(doc_ids, data, keywords)
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -75,8 +77,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
         React.createElement(Content, {style: {'height':'100%'}, 
           data: this.state.data, 
           extractors: this.state.extractors, 
-          onFacetChange: this.handleFacetChange, 
-          annotations: this.state.annotations})
+          onFacetChange: this.handleFacetChange})
       )
     );
   }
@@ -131,7 +132,7 @@ var Content = React.createClass({displayName: "Content",
       React.createElement("div", {className: "content"}, 
         React.createElement(LeftMenu, {extractors: this.props.extractors, 
           onFacetChange: this.props.onFacetChange}), 
-        React.createElement(Results, {data: this.props.data, annotations: this.props.annotations}), 
+        React.createElement(Results, {data: this.props.data}), 
         React.createElement(Help, null)
       )
       );
@@ -177,19 +178,19 @@ var Help = React.createClass({displayName: "Help",
 
 var Results = React.createClass({displayName: "Results",
   render: function() {
-    var docAnnotations = {}
-    this.props.data.map(function(result) { docAnnotations[result['_id']] = [] });
+    // var docAnnotations = {}
+    // this.props.data.map(function(result) { docAnnotations[result['_id']] = [] });
 
-    this.props.annotations.map(function(a) {
-      var src = a['_source']
-      var docId = src['range']['doc_id']
-      if (docId in docAnnotations) {
-        docAnnotations[docId].push(src)
-      }
-    })
+    // this.props.annotations.map(function(a) {
+    //   var src = a['_source']
+    //   var docId = src['range']['doc_id']
+    //   if (docId in docAnnotations) {
+    //     docAnnotations[docId].push(src)
+    //   }
+    // })
     var resultNodes = this.props.data.map(function(result) {
       return (
-        React.createElement(Result, {data: result, annotations: docAnnotations[result['_id']]})
+        React.createElement(Result, {data: result})
         );
     });
     return (React.createElement("div", {style: {marginLeft:'200px', marginRight:'200px'}}, 
@@ -221,7 +222,7 @@ var Result = React.createClass({displayName: "Result",
   },
   render: function() {
     return (React.createElement("div", {className: "result"}, 
-          React.createElement(TextWithAnnotations, {data: this.props.data, layers: this.state.layers, annotations: this.props.annotations}), 
+          React.createElement(TextWithAnnotations, {data: this.props.data, layers: this.state.layers}), 
           React.createElement(AnnotationsSelector, {layers: this.state.layers, onLayerChange: this.onLayerChange})
       ));
   }  
