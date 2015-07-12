@@ -207,8 +207,8 @@ var TokenTagsVisualization = function(element, tokenOffsets, tags) {
 			'font-size:10px;' +
 			'font-family:helvetica,arial;' +
 			'font-stretch:semi-condensed;' +
-			'font-weight:500;' +
-			'background-color:white'
+			'font-weight:500;'/* +
+			'background-color:white'*/
 		})
 		el.appendChild(goog.dom.createTextNode(tags[i]))
 		// if you want all lines to be equal height, set marginTop as follows
@@ -321,16 +321,16 @@ var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
         	delete vis[l.name]
         }
         if (vis && !vis[l.name] && l.active) {
-        	if (l.name == 'Lemmas')
-        		vis[l.name] = new LemmasVisualization(div, sourceData)        		
-        	if (l.name == 'PartOfSpeech')
-        		vis[l.name] = new PartOfSpeechVisualization(div, sourceData)        		
         	if (l.name == 'Tokens')
         		vis[l.name] = new TokensVisualization(div, sourceData)
         	if (l.name == 'Sentences')
         		vis[l.name] = new SentencesVisualization(div, sourceData)
         	if (l.name == 'Extractors')
         		vis[l.name] = new ExtractorsVisualization(div, sourceData, annotations)
+        	if (l.name == 'Lemmas')
+        		vis[l.name] = new LemmasVisualization(div, sourceData)        		
+        	if (l.name == 'PartOfSpeech')
+        		vis[l.name] = new PartOfSpeechVisualization(div, sourceData)        		
         }
     })
   },

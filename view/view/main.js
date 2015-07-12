@@ -208,11 +208,11 @@ var Results = React.createClass({
 var Result = React.createClass({
   getInitialState: function() {
    return {layers: [
+     { name: "Extractors", active: true },
      { name: "Tokens", active: false },
      { name: "Sentences", active: false },
      { name: "Lemmas", active: false },
      { name: "PartOfSpeech", active: false },
-     { name: "Extractors", active: true },
      { name: "Details", active: false },
      ]};
   },
