@@ -65,7 +65,7 @@ ann.sentenceTokenOffsets
 ## Storage
 
 We propose to store these in column format, where there exists one file for each type of schema.
-Pipe contains readers and writers for column format in both scala and python.
+Pipe contains readers and writers for column format in both [scala](pipe/src/main/scala/com/clearcut/pipe/io) and [python](../view/util/pipe.py).
 
 For compatibility reasons, Pipe also allows you to read and write as single JSON:
 ```
@@ -77,7 +77,7 @@ For compatibility reasons, Pipe also allows you to read and write as single JSON
  ...
 }
 ```
-And for backwards compatibility, Pipe also allows you to write as our legacy psql-specific TSV.
+And for backwards compatibility, Pipe also allows you to write in our psql-specific TSV.
 
 ## Framework
 
@@ -85,7 +85,7 @@ The framework allows you to plug together different preprocessing components. Cu
 
 Since the components read and write our language-agnostic schemas, we can now plug together components in arbitrary programming languages including python, scala, julia.
 
-When working with Scala, you can choose to use static typing or not. If you use static typing, typedefs make code compact and clean:
+When working with Scala, you can choose to use static typing or not. If you use static typing, [our typedefs](src/main/scala/com/clearcut/pipe/model/package.scala) make code compact and clean:
 ```
 type ID = String
 type Poss = Array[String]
@@ -96,15 +96,26 @@ type SentenceTokenOffsets = Array[Offsets]
 type Text = String
 ...
 ```
+An example is [here](src/test/scala/BasicSpec.scala).
 
+To build a custom tokenizer that solves the `$300. 00` problem, you can write something like 
+```
+import com.clearcut.pipe.annotator.Annotator
+import com.clearcut.pipe.model._
+
+class MyTokenizer extends Annotator[Text,(TokenOffsets,Tokens)] {
+  override def annotate(t:(Text)):(TokenOffsets, Tokens) = {
+     // add custom logic here
+  }
+}
+```
 
 ## Tip
 
-You can also run these Pipe in a regular scala REPL and manipulate your data or processing components interactively. 
+You can run Pipe in a regular scala REPL and manipulate your data or processing components interactively. 
+
+You can also our python readers and writers in a python REPL and create your own components there.
 
 ## Setup
 
 Run `setup.sh` to install dependencies and build the parser. Pipe requires Java 8.
-
-
-
