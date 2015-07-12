@@ -3,7 +3,7 @@ Pipe
 
 Lightweight schemas and processing framework for NLP. 
 
-  In many DeepDive applications, errors in pre-processing become more relevant as one tries to push up precision and recall. Often no further quality improvement is possible without targeting these errors. 
+* In many DeepDive applications, errors in pre-processing become more relevant as one tries to push up precision and recall. Often no further quality improvement is possible without targeting these errors. 
 
   An example:
   ```
@@ -17,9 +17,21 @@ Lightweight schemas and processing framework for NLP.
 
   Pipe solves this problem by breaking up the preprocessing components. It is now easy to add your custom tokenization or sentence splitting rules. For almost any domain, we want to add a few such domain-specific rules to improve pre-processing.
   
+* We have a few problems with our current schemas for NLP. 
+  1. Our NLP parser outputs a file in psql-specific format that no other application can read. 
+  2. When running extractors, we manually serialize and deserialize using custom logic consisting of UDFs (array_to_string) and language-specific code (String.split).
+  3. Our sentences table is very wide, but most extractors only need 2 or 3 columns. This creates unnecessary I/O.
+  
 ## Schemas
 
+With Pipe, we create a set of *minimal* schemas for the different NLP annotations. There's one schema for each type of annotation, and we currently have 18 schemas in total. The schemas are in JSON, which makes it trivial to read from and write in any programming language.
 
+Examples:
+
+ann.id
+```
+"doc123"
+```
 
 ann.text
 ```
@@ -50,18 +62,49 @@ ann.sentenceTokenOffsets
 [[0,8],[8,13]]
 ```
 
+## Storage
 
+We propose to store these in column format, where there exists one file for each type of schema.
+Pipe contains readers and writers for column format in both scala and python.
 
+For compatibility reasons, Pipe also allows you to read and write as single JSON:
+```
+{
+  "id": "doc123",
+  "text": "This is a very simple text file.\nIt contains two sentences.",
+  "poss": ["DT","VBZ","DT","RB","JJ","NN","NN",".","PRP","VBZ","CD","NNS","."],
+  "tokens": ["This","is","a","very","simple","text","file",".","It","contains","two","sentences","."],
+ ...
+}
+```
+And for backwards compatibility, Pipe also allows you to write as our legacy psql-specific TSV.
 
 ## Framework
 
-* Use scala static typing or not
-* Use python
+The framework allows you to plug together different preprocessing components. Currently, Pipe contains wrappers for most components of Stanford CoreNLP, as well as a components that can run an entire Stanford pipeline.
 
+Since the components read and write our language-agnostic schemas, we can now plug together components in arbitrary programming languages including python, scala, julia.
+
+When working with Scala, you can choose to use static typing or not. If you use static typing, typedefs make code compact and clean:
+```
+type ID = String
+type Poss = Array[String]
+type Offsets = Array[Int]
+type SentenceDependencies = Array[Array[Dependency]]
+type SentenceOffsets = Array[Offsets]
+type SentenceTokenOffsets = Array[Offsets]
+type Text = String
+...
+```
+
+
+## Tip
+
+You can also run these Pipe in a regular scala REPL and manipulate your data or processing components interactively. 
 
 ## Setup
 
 Run `setup.sh` to install dependencies and build the parser. Pipe requires Java 8.
 
 
-[Plans](./plans.md)
+
