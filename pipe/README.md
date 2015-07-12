@@ -65,7 +65,7 @@ ann.sentenceTokenOffsets
 ## Storage
 
 We propose to store these in column format, where there exists one file for each type of schema.
-Pipe contains readers and writers for column format in both [scala](pipe/src/main/scala/com/clearcut/pipe/io) and [python](../view/util/pipe.py).
+Pipe contains readers and writers for column format in both [scala](src/main/scala/com/clearcut/pipe/io) and [python](../view/util/pipe.py).
 
 For compatibility reasons, Pipe also allows you to read and write as single JSON:
 ```
