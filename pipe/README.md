@@ -21,10 +21,42 @@ Lightweight schemas and processing framework for NLP.
 
 
 
+ann.text
+```
+"This is a very simple text file.\nIt contains two sentences."
+```
+
+ann.poss
+```
+["DT","VBZ","DT","RB","JJ","NN","NN",".","PRP","VBZ","CD","NNS","."]
+```
+
+ann.tokens
+```
+["This","is","a","very","simple","text","file",".","It","contains","two","sentences","."]
+```
+ann.tokenOffsets
+```
+[[0,4],[5,7],[8,9],[10,14],[15,21],[22,26],[27,31],[31,32],[33,35],[36,44],[45,48],[49,58],[58,59]]
+```
+
+ann.sentenceOffsets
+```
+[[0,32],[33,59]]
+```
+
+ann.sentenceTokenOffsets
+```
+[[0,8],[8,13]]
+```
+
+
 
 
 ## Framework
 
+* Use scala static typing or not
+* Use python
 
 
 ## Setup
