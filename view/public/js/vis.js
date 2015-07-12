@@ -351,13 +351,12 @@ var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
     }
     var details = []
     if (this.isActive('Details')) {
+	    $.each(this.props.data.annotations, function(i, value) {
+	    	details.push(React.createElement("div", {className: "extractionBlue"}, JSON.stringify(value), " "));
+	    })
 	    $.each(this.props.data._source, function(name, value) {
 	      if (name != 'content' && name != 'id')
 	        details.push (React.createElement("div", {className: "extraction"}, name, " : ", JSON.stringify(value), " "));
-	    })
-
-	    $.each(this.props.data.annotations, function(i, value) {
-	    	details.push(React.createElement("div", {className: "extractionBlue"}, JSON.stringify(value), " "));
 	    })
 	}
 

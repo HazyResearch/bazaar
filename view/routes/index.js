@@ -124,6 +124,7 @@ router.get('/docs', function(req, res, next) {
   }
 
   client.search(obj).then(function (body) {
+    var docs_context = body.hits
     var docs = body.hits.hits;
    
     // we now have the documents, run another query to get all annotations on
@@ -165,7 +166,7 @@ router.get('/docs', function(req, res, next) {
       for (var i=0, ii = docs.length; i < ii; i++) {
         docs[i].annotations = id2ann[docs[i]._id] || []
       } 
-      res.send(docs) 
+      res.send(docs_context) 
     }, function(err) {
       console.trace(err.message);
       next(err)

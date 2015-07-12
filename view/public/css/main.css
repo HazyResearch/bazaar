@@ -259,9 +259,9 @@ html, body {
 }
 
 .annotationsSelector {
-  border:1px solid #EEE;
+  border-top:1px solid #EEE;
   visibility: hidden;
-  background-color:white;
+  background-color:transparent;
   position:absolute;
   padding:10px;
   top:0px;

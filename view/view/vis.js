@@ -351,13 +351,12 @@ var TextWithAnnotations = React.createClass({
     }
     var details = []
     if (this.isActive('Details')) {
+	    $.each(this.props.data.annotations, function(i, value) {
+	    	details.push(<div className='extractionBlue'>{JSON.stringify(value)} </div>);
+	    })
 	    $.each(this.props.data._source, function(name, value) {
 	      if (name != 'content' && name != 'id')
 	        details.push (<div className='extraction'>{name} : {JSON.stringify(value)} </div>);
-	    })
-
-	    $.each(this.props.data.annotations, function(i, value) {
-	    	details.push(<div className='extractionBlue'>{JSON.stringify(value)} </div>);
 	    })
 	}
 

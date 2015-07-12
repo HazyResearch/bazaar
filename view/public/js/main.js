@@ -4,20 +4,6 @@ var SearchPage = React.createClass({displayName: "SearchPage",
   notify: function(msg) {
 
   },
-  // handleAnnotationsQuery: function(doc_ids, docs, keywords) {
-  //    $.ajax({
-  //      url: 'annotations?doc_ids=' + encodeURIComponent(doc_ids),
-  //      success: function(data) {
-  //        console.log('got annotations')
-  //        console.log(data)
-  //        this.setState({data: docs, keywords:keywords, annotations:data});
-  //        //this.setState({annotations:data});
-  //      }.bind(this),
-  //      error: function(xhr, status, err) {
-  //       console.error(this.props.url, status, err.toString());
-  //      }.bind(this)
-  //    });
-  // },
   handleKeywordQuery: function(keywords) {
     facets = []
     $.each(this.state.extractors, function(index, value) {
@@ -28,13 +14,29 @@ var SearchPage = React.createClass({displayName: "SearchPage",
             '&facets=' + facets.join(),
       success: function(data) {
         this.setState({data: data, keywords:keywords});
-        // var doc_ids = data.map(function(r) { return r['_id']})
-        // this.handleAnnotationsQuery(doc_ids, data, keywords)
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
+  },
+  handleShowMore: function() {
+    var start = this.state.data.hits.length
+    facets = []
+    $.each(this.state.extractors, function(index, value) {
+      if (value.active)
+        facets.push(value.name); });
+    $.ajax({
+      url: 'docs?start=' + start + '&keywords=' + encodeURIComponent(this.state.keywords) + 
+            '&facets=' + facets.join(),
+      success: function(data) {
+        var all = { 'total': data.total, 'hits': this.state.data.hits.concat(data.hits) }
+        this.setState({data: all, keywords:this.state.keywords});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });    
   },
   handleFacetChange: function(name, active) {
     $.each(this.state.extractors, function(index, value) {
@@ -63,7 +65,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
     });
   },
   getInitialState: function() {
-    return {data: [], extractors: [], keywords: '', annotations:[]};
+    return {data: {hits:[]}, extractors: [], keywords: ''};
   },
   componentDidMount: function() {
     this.handleLoadExtractors()
@@ -77,7 +79,8 @@ var SearchPage = React.createClass({displayName: "SearchPage",
         React.createElement(Content, {style: {'height':'100%'}, 
           data: this.state.data, 
           extractors: this.state.extractors, 
-          onFacetChange: this.handleFacetChange})
+          onFacetChange: this.handleFacetChange, 
+          onShowMore: this.handleShowMore})
       )
     );
   }
@@ -94,7 +97,7 @@ var Header = React.createClass({displayName: "Header",
     return {query: ''};
   },
   inputSubmit: function() {
-    var val = this.state.query; //refs.query.getDOMNode().value;
+    var val = this.state.query;
     this.props.onKeywordQuery(val)
   },
   handleChange: function(evt) {
@@ -132,7 +135,7 @@ var Content = React.createClass({displayName: "Content",
       React.createElement("div", {className: "content"}, 
         React.createElement(LeftMenu, {extractors: this.props.extractors, 
           onFacetChange: this.props.onFacetChange}), 
-        React.createElement(Results, {data: this.props.data}), 
+        React.createElement(Results, {data: this.props.data, onShowMore: this.props.onShowMore}), 
         React.createElement(Help, null)
       )
       );
@@ -177,26 +180,28 @@ var Help = React.createClass({displayName: "Help",
 })
 
 var Results = React.createClass({displayName: "Results",
-  render: function() {
-    // var docAnnotations = {}
-    // this.props.data.map(function(result) { docAnnotations[result['_id']] = [] });
+  handleShowMoreClick: function() {
+    this.props.onShowMore();
+  },
 
-    // this.props.annotations.map(function(a) {
-    //   var src = a['_source']
-    //   var docId = src['range']['doc_id']
-    //   if (docId in docAnnotations) {
-    //     docAnnotations[docId].push(src)
-    //   }
-    // })
-    var resultNodes = this.props.data.map(function(result) {
-      return (
-        React.createElement(Result, {data: result})
-        );
-    });
-    return (React.createElement("div", {style: {marginLeft:'200px', marginRight:'200px'}}, 
-      React.createElement("br", null), 
-      resultNodes
-      ));
+  render: function() {
+    var resultNodes = this.props.data.hits.map(function(result) {
+       return (
+         React.createElement(Result, {data: result})
+         );
+     });
+    var showMoreButton = ''
+    if (this.props.data.hits.length > 0 && this.props.data.hits.length < this.props.data.total) {
+       showMoreButton = (React.createElement("div", {style: {cursor:'pointer'}, onClick: this.handleShowMoreClick}, "Show more"))
+     }
+
+     return (React.createElement("div", {style: {marginLeft:'200px', marginRight:'200px'}}, 
+       React.createElement("div", {style: {'textAlign':'right', paddingTop:'10px', paddingBottom:'5px', 'color':'#AAA'}}, 
+         this.props.data.total, " results"
+       ), 
+       resultNodes, 
+       showMoreButton
+       ));
   }
 })
 
@@ -222,11 +227,12 @@ var Result = React.createClass({displayName: "Result",
   },
   render: function() {
     return (React.createElement("div", {className: "result"}, 
-          React.createElement(TextWithAnnotations, {data: this.props.data, layers: this.state.layers}), 
-          React.createElement(AnnotationsSelector, {layers: this.state.layers, onLayerChange: this.onLayerChange})
+         React.createElement(TextWithAnnotations, {data: this.props.data, layers: this.state.layers}), 
+         React.createElement(AnnotationsSelector, {layers: this.state.layers, onLayerChange: this.onLayerChange})
       ));
   }  
 })
+
 
 
 React.render(
