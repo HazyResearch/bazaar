@@ -3,6 +3,8 @@ Pipe
 
 Lightweight schemas and processing framework for NLP. 
 
+Pipe addresses the following problems: 
+
 * In many DeepDive applications, errors in pre-processing become more relevant as one tries to push up precision and recall. Often no further quality improvement is possible without targeting these errors. 
 
   An example:
@@ -21,6 +23,8 @@ Lightweight schemas and processing framework for NLP.
   1. Our NLP parser outputs a file in psql-specific format that no other application can read. 
   2. When running extractors, we manually serialize and deserialize using custom logic consisting of UDFs (array_to_string) and language-specific code (String.split).
   3. Our sentences table is very wide, but most extractors only need 2 or 3 columns. This creates unnecessary I/O.
+  4. Our output is lossy, because we don't store the original text (only a tokenized version), and we have lost the mapping to the original characters.
+  5. It would be difficult to add coreference information to the sentences table, because it is not document-based.
   
 ## Schemas
 
@@ -114,7 +118,7 @@ class MyTokenizer extends Annotator[Text,(TokenOffsets,Tokens)] {
 
 You can run Pipe in a regular scala REPL and manipulate your data or processing components interactively. 
 
-You can also our python readers and writers in a python REPL and create your own components there.
+You can also run our python readers and writers in a python REPL and create your own components there.
 
 ## Setup
 
