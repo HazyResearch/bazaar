@@ -21,14 +21,14 @@ class TsvWriter(out:String = null, outWriter:BufferedWriter = null) extends Writ
   var indices:Seq[Int] = null
 
   def setSchema(schema:Schema) = {
-    indices = Schema.defaultAnnotationIndices(schema, Seq("ID", "Text", "SentenceOffsets",
+    indices = Schema.defaultAnnotationIndices(schema, Seq("Id", "Text", "SentenceOffsets",
       "SentenceTokenOffsets", "Tokens", "TokenOffsets", "Lemmas", "Poss",
       "NerTags", "SentenceDependencies"))
   }
 
   def write(annotations:Seq[AnyRef]) = {
     val is = indices.map(annotations(_))
-    val id = is(0).asInstanceOf[ID]
+    val id = is(0).asInstanceOf[Id]
     val ta = is(1).asInstanceOf[Text]
     val soa = is(2).asInstanceOf[SentenceOffsets]
     val stoa = is(3).asInstanceOf[SentenceTokenOffsets]

@@ -3,7 +3,7 @@ package com.clearcut.pipe.io
 import java.nio.charset.CodingErrorAction
 
 import com.clearcut.pipe.Schema
-import com.clearcut.pipe.model.{Text, ID}
+import com.clearcut.pipe.model.{Text, Id}
 
 import scala.io.{Source, BufferedSource}
 
@@ -23,7 +23,7 @@ class TsvReader(in:String = null,
   var _next = fetchNext()
 
   override def getSchema:Schema =
-    Schema.createSchema("ID", "Text")
+    Schema.createSchema("Id", "Text")
 
   override def hasNext: Boolean =
     _next != null
@@ -34,20 +34,51 @@ class TsvReader(in:String = null,
     n
   }
 
+  // should unescape \, \r, \n, \t
   private def fetchNext(): Array[AnyRef] = {
     var n:Array[AnyRef] = null
     while (n == null && it.hasNext) {
       val (line, num) = it.next
       val tsvArr = line.trim.split("\t")
       if (tsvArr.length >= 2) {
-        val documentId = tsvArr(0)
-        val documentStr = tsvArr(1)
+        val documentId = tsvArr(idCol)
+        val documentStr = unescape(tsvArr(documentCol))
         n = Array(documentId, documentStr)
       } else {
         System.err.println(s"Warning: skipped malformed line ${num}: ${line}")
       }
     }
     n
+  }
+
+  private def unescape(s:String):String = {
+    val sb = new StringBuilder()
+    val NORMAL = 0
+    val ESCAPE = 1
+
+    var state = NORMAL
+
+    for (i <- 0 until s.length) {
+      val c = s.charAt(i)
+      //val l = if (i == s.length - 1) Character.UNASSIGNED else s.charAt(i+1)
+      state match {
+        case NORMAL =>
+          c match {
+            case '\\' => state = ESCAPE
+            case _ => sb.append(c)
+          }
+        case ESCAPE =>
+          c match {
+            case 'r' => sb.append('\r'); state = NORMAL
+            case 'n' => sb.append('\n'); state = NORMAL
+            case 't' => sb.append('\t'); state = NORMAL
+            case '\\' => sb.append('\\'); state = NORMAL
+            case _ =>
+              println("ERROR")
+          }
+      }
+    }
+    return sb.toString
   }
 
   def close =

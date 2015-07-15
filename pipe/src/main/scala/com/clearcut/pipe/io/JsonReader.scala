@@ -3,7 +3,7 @@ package com.clearcut.pipe.io
 import java.nio.charset.CodingErrorAction
 
 import com.clearcut.pipe.Schema
-import com.clearcut.pipe.model.{ID, Text}
+import com.clearcut.pipe.model.{Id, Text}
 
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -27,7 +27,7 @@ class JsonReader(in:String,
   var _next = fetchNext()
 
   override def getSchema:Schema =
-    Schema.createSchema("ID", "Text")
+    Schema.createSchema("Id", "Text")
 
   override def hasNext: Boolean =
     _next != null

@@ -6,7 +6,7 @@ import com.clearcut.pipe.io.Json
 package object model {
   type Coreferences = Array[CoreferenceChain]
   type Dependencies = Array[Dependency]
-  type ID = String
+  type Id = String
   type Lemmas = Array[String]
   type Mentions = Array[Mention]
   type Ners = Array[NamedEntity]
