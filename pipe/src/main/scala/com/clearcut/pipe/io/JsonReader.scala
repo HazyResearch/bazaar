@@ -27,7 +27,7 @@ class JsonReader(in:String,
   var _next = fetchNext()
 
   override def getSchema:Schema =
-    Schema.createSchema("Id", "Text")
+    Schema.createSchema("id", "text")
 
   override def hasNext: Boolean =
     _next != null

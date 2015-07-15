@@ -15,6 +15,8 @@ object Main extends App {
                     formatOut: String = "column",
                     documentKey: String = "text",
                     idKey: String = "id",
+                    documentCol: Int = 1,
+                    idCol: Int = 0,
                     annotators: String = "SimpleStanfordPipeline")
 
   val optionsParser = new scopt.OptionParser[Config]("Pipe") {
@@ -33,6 +35,12 @@ object Main extends App {
     opt[String]('k', "jsonKey") action { (x, c) =>
       c.copy(idKey = x)
     } text("JSON key that contains the document id, for example \"documents.id\"")
+    opt[Int]("tsvValue") action { (x, c) =>
+      c.copy(documentCol = x)
+    } text("Column number that contains the document content, for example 1")
+    opt[Int]("tsvKey") action { (x, c) =>
+      c.copy(idCol = x)
+    } text("Column number that contains the document id, for example 0")
     opt[String]('i', "input") action { (x, c) =>
       c.copy(in = x)
     } text("Input dir (column) or file (json, tsv)")
@@ -65,7 +73,7 @@ object Main extends App {
   val reader:Reader = conf.formatIn match {
     case "column" => new ColumnReader(conf.in)
     case "json" => new JsonReader(conf.in, conf.idKey, conf.documentKey)
-    case "tsv" => new TsvReader(conf.in)
+    case "tsv" => new TsvReader(conf.in, conf.idCol, conf.documentCol)
   }
 
   val writer:Writer = conf.formatOut match {
