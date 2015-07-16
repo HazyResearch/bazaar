@@ -211,6 +211,7 @@ var Result = React.createClass({
      { name: "Extractors", active: true },
      { name: "Tokens", active: false },
      { name: "Sentences", active: false },
+     { name: "Dependencies", active: false },
      { name: "Lemmas", active: false },
      { name: "PartOfSpeech", active: false },
      { name: "Details", active: false },

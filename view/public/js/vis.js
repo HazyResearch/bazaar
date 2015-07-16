@@ -327,6 +327,8 @@ var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
         		vis[l.name] = new SentencesVisualization(div, sourceData)
         	if (l.name == 'Extractors')
         		vis[l.name] = new ExtractorsVisualization(div, sourceData, annotations)
+        	if (l.name == 'Dependencies')
+        		vis[l.name] = new DependenciesVisualization(div, sourceData)
         	if (l.name == 'Lemmas')
         		vis[l.name] = new LemmasVisualization(div, sourceData)        		
         	if (l.name == 'PartOfSpeech')
