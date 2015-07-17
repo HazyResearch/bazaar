@@ -1,3 +1,11 @@
+/**
+ *
+ */
+"use strict";
+
+var TextWithAnnotations = require('./vis/TextWithAnnotations.js')
+var AnnotationsSelector = require('./vis/AnnotationsSelector.js')
+var Help = require('./help/Help.js')
 
 
 var SearchPage = React.createClass({
@@ -5,7 +13,7 @@ var SearchPage = React.createClass({
 
   },
   handleKeywordQuery: function(keywords) {
-    facets = []
+    var facets = []
     $.each(this.state.extractors, function(index, value) {
       if (value.active)
         facets.push(value.name); });
@@ -22,7 +30,7 @@ var SearchPage = React.createClass({
   },
   handleShowMore: function() {
     var start = this.state.data.hits.length
-    facets = []
+    var facets = []
     $.each(this.state.extractors, function(index, value) {
       if (value.active)
         facets.push(value.name); });
@@ -49,7 +57,7 @@ var SearchPage = React.createClass({
       url: 'annotators',
       success: function(data) {
         // add a field to represent active/non-active
-        extractors = data.map(function(it) {
+        var extractors = data.map(function(it) {
           return {
             'name': it._source.name,
             'active': false
@@ -64,8 +72,16 @@ var SearchPage = React.createClass({
       }.bind(this)
     });
   },
+  handleToggleHelp: function() {
+    this.setState({isHelp: !this.state.isHelp})
+  },
   getInitialState: function() {
-    return {data: {hits:[]}, extractors: [], keywords: ''};
+    return {
+        data: {hits:[]},
+        extractors: [],
+        keywords: '',
+        isHelp: false
+    }
   },
   componentDidMount: function() {
     this.handleLoadExtractors()
@@ -74,12 +90,14 @@ var SearchPage = React.createClass({
   render: function() {
     return (
       <div>
-        <Header onKeywordQuery={this.handleKeywordQuery} />
+        <Header onKeywordQuery={this.handleKeywordQuery}
+          onToggleHelp={this.handleToggleHelp} />
         <NotificationBox />
         <Content style={{'height':'100%'}} 
           data={this.state.data} 
-          extractors={this.state.extractors} 
-          onFacetChange={this.handleFacetChange} 
+          extractors={this.state.extractors}
+          isHelp={this.state.isHelp}
+          onFacetChange={this.handleFacetChange}
           onShowMore={this.handleShowMore} />
       </div>
     );
@@ -108,6 +126,9 @@ var Header = React.createClass({
           return this.inputSubmit();
       }
   },
+  handleToggleHelp: function(evt) {
+    this.props.onToggleHelp()
+  },
   render: function() {
     return (
       <div className='header unselectable'>
@@ -118,6 +139,10 @@ var Header = React.createClass({
           <input type='text' ref='query'  value={this.state.query}
             onChange={this.handleChange} onKeyDown={this.handleKeyDown}/>
         </div>
+        <div style={{position:'absolute', right:0, width:60, paddingTop:'7px'}}>
+            <div onClick={this.handleToggleHelp} style={{cursor:'pointer',width:'36px',height:'36px',borderRadius:'21px',border:'2px solid #CCC',color:'#CCC',fontSize:'30px',fontWeight:'bold',fontFamily:'courier',textAlign:'center'}}>?</div>
+        </div>
+
       </div>
     );
   }
@@ -136,7 +161,7 @@ var Content = React.createClass({
         <LeftMenu extractors={this.props.extractors}
           onFacetChange={this.props.onFacetChange} />
         <Results data={this.props.data} onShowMore={this.props.onShowMore} />
-        <Help />
+        <Help isHelp={this.props.isHelp} />
       </div>
       );
   }
@@ -170,12 +195,6 @@ var Facet = React.createClass({
          <i className="fa fa-check" ></i>
        </div> 
        {this.props.data.name}</div>)
-  }
-})
-
-var Help = React.createClass({
-  render: function() {
-    return (<div className='help'></div>);
   }
 })
 

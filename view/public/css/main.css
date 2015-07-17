@@ -273,3 +273,16 @@ html, body {
   visibility: visible
 }
 
+.help h1 {
+  font-size:16px;
+  margin:0px;
+}
+
+.help h3 {
+  margin:0px;
+  margin-top:20px;
+  margin-bottom:5px;
+  font-weight:bold;
+}
+
+
