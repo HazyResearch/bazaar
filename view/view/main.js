@@ -1,25 +1,42 @@
-/**
- *
- */
 "use strict";
+
+var React = window.React = require('react/addons');
+var ReactRouter = require('react-router');
+var Router = ReactRouter.Router;
+var Route = ReactRouter.Route;
+var HashHistory    = require('react-router/lib/HashHistory').default;
+var Link = ReactRouter.Link;
 
 var TextWithAnnotations = require('./vis/TextWithAnnotations.js')
 var AnnotationsSelector = require('./vis/AnnotationsSelector.js')
 var Help = require('./help/Help.js')
 
-
 var SearchPage = React.createClass({
   notify: function(msg) {
 
   },
+  indexName:function(){
+    // we override the default index ("view") if the path has the format /search/INDEX,
+    // where INDEX is a name
+    //var path = document.location.pathname
+    //var prefix = '/search/'
+    //if (path.substring(0,prefix.length) == prefix)
+    //    return path.substring(prefix.length)
+
+    var index = 'view'
+    if (this.props.params && this.props.params.index)
+        index = this.props.params.index
+    return index
+  },
   handleKeywordQuery: function(keywords) {
+    var index = this.indexName()
     var facets = []
     $.each(this.state.extractors, function(index, value) {
       if (value.active)
         facets.push(value.name); });
     $.ajax({
-      url: 'docs?keywords=' + encodeURIComponent(keywords) + 
-            '&facets=' + facets.join(),
+      url: '/docs?keywords=' + encodeURIComponent(keywords) +
+            '&facets=' + facets.join() + "&index=" + index,
       success: function(data) {
         this.setState({data: data, keywords:keywords});
       }.bind(this),
@@ -29,14 +46,15 @@ var SearchPage = React.createClass({
     });
   },
   handleShowMore: function() {
+    var index = this.indexName()
     var start = this.state.data.hits.length
     var facets = []
     $.each(this.state.extractors, function(index, value) {
       if (value.active)
         facets.push(value.name); });
     $.ajax({
-      url: 'docs?start=' + start + '&keywords=' + encodeURIComponent(this.state.keywords) + 
-            '&facets=' + facets.join(),
+      url: '/docs?start=' + start + '&keywords=' + encodeURIComponent(this.state.keywords) +
+            '&facets=' + facets.join() + '&index=' + index,
       success: function(data) {
         var all = { 'total': data.total, 'hits': this.state.data.hits.concat(data.hits) }
         this.setState({data: all, keywords:this.state.keywords});
@@ -44,7 +62,7 @@ var SearchPage = React.createClass({
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
-    });    
+    });
   },
   handleFacetChange: function(name, active) {
     $.each(this.state.extractors, function(index, value) {
@@ -53,8 +71,9 @@ var SearchPage = React.createClass({
     this.handleKeywordQuery(this.state.keywords);
   },
   handleLoadExtractors: function() {
+    var index = this.indexName()
     $.ajax({
-      url: 'annotators',
+      url: '/annotators?index=' + index,
       success: function(data) {
         // add a field to represent active/non-active
         var extractors = data.map(function(it) {
@@ -64,7 +83,7 @@ var SearchPage = React.createClass({
           };
         })
         if (this.isMounted()) {
-          this.setState({extractors:extractors}); 
+          this.setState({extractors:extractors});
         }
       }.bind(this),
       error: function(xhr, status, err) {
@@ -88,13 +107,15 @@ var SearchPage = React.createClass({
     this.handleKeywordQuery('')
   },
   render: function() {
+    //var index = this.props.params.index
+    console.log(this.props)
     return (
       <div>
         <Header onKeywordQuery={this.handleKeywordQuery}
           onToggleHelp={this.handleToggleHelp} />
         <NotificationBox />
-        <Content style={{'height':'100%'}} 
-          data={this.state.data} 
+        <Content style={{'height':'100%'}}
+          data={this.state.data}
           extractors={this.state.extractors}
           isHelp={this.state.isHelp}
           onFacetChange={this.handleFacetChange}
@@ -193,7 +214,7 @@ var Facet = React.createClass({
     return (<div className={classes} onClick={this.handleClick}>
        <div style={{display:'inline-block',width:'30px'}}>
          <i className="fa fa-check" ></i>
-       </div> 
+       </div>
        {this.props.data.name}</div>)
   }
 })
@@ -239,10 +260,10 @@ var Result = React.createClass({
   onLayerChange: function(name, active) {
     $.each(this.state.layers, function(index, value) {
       if (value.name == name)
-        value.active = active; 
+        value.active = active;
     })
     if (this.isMounted()) {
-      this.setState({layers:this.state.layers}); 
+      this.setState({layers:this.state.layers});
     }
   },
   render: function() {
@@ -250,12 +271,36 @@ var Result = React.createClass({
          <TextWithAnnotations data={this.props.data} layers={this.state.layers} />
          <AnnotationsSelector layers={this.state.layers} onLayerChange={this.onLayerChange} />
       </div>);
-  }  
+  }
 })
 
+//React.render(
+//  <SearchPage />,
+//  document.getElementById('page')
+//);
 
+var App = React.createClass({
+  render() {
+    return (
+      <div>
+        <ul>
+          <li><Link to="/search/view">Default Index</Link></li>
+          <li><Link to="/search/index2" query={{showAge: true}}>Index2</Link></li>
+          <li><Link to="/search/index3">Index3</Link></li>
+        </ul>
+        {this.props.children}
+      </div>
+    );
+  }
+});
 
-React.render(
-  <SearchPage />,
-  document.getElementById('page')
-);
+// Declarative route configuration (could also load this config lazily
+// instead, all you really need is a single root route, you don't need to
+// colocate the entire config).
+React.render((
+  <Router history={HashHistory}>
+    <Route path="/" component={App}>
+      <Route path="/search/:index" component={SearchPage}/>
+    </Route>
+  </Router>
+), document.body);

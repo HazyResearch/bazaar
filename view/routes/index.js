@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var path = require('path');
 
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
@@ -7,12 +8,19 @@ var client = new elasticsearch.Client({
 });
 
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express3' });
+  //res.render('index', { title: 'Express3' });
+  res.sendFile(path.join(__dirname + '/../public/index.html'));
+});
+
+router.get('/search*', function(req, res, ext) {
+  //res.render('index', { title: 'Express3' });
+  res.sendFile(path.join(__dirname + '/../public/index.html'));
 });
 
 router.get('/annotators', function(req, res, next) {
+  var index = req.query.index || 'view'
   client.search({
-    index: process.env.INDEX_NAME,
+    index: index, //process.env.INDEX_NAME,
     type: 'annotators',
     body: {
       query: {
@@ -32,9 +40,10 @@ router.get('/annotations', function(req, res, next) {
   var doc_ids = []
   var doc_ids_str = req.param('doc_ids')
   if (doc_ids_str) doc_ids = doc_ids_str.split(',') 
+  var index = req.query.index || 'view'
 
   var obj = {
-    index: process.env.INDEX_NAME,
+    index: index, //process.env.INDEX_NAME,
     type: 'annotations',
     from: 0,
     size: 100000,
@@ -70,9 +79,10 @@ router.get('/docs', function(req, res, next) {
   var limit = req.param('limit', 100)
   var keywords = req.query.keywords || ''
   var facets = req.query.facets || ''
+  var index = req.query.index || 'view'
 
   var obj = {
-    index: process.env.INDEX_NAME, 
+    index: index, //process.env.INDEX_NAME,
     type: 'docs',
     from: from,
     size: limit,
@@ -134,7 +144,7 @@ router.get('/docs', function(req, res, next) {
       doc_ids[i] = docs[i]._id
 
     var obj = {
-      index: process.env.INDEX_NAME,
+      index: index, //process.env.INDEX_NAME,
       type: 'annotations',
       from:0,
       size:100000,

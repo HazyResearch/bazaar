@@ -3,10 +3,35 @@
  */
 "use strict";
 
+var React       = require('react');
+
 var TextWithAnnotations = require('./vis/TextWithAnnotations.js')
 var AnnotationsSelector = require('./vis/AnnotationsSelector.js')
 var Help = require('./help/Help.js')
 
+//import React  from 'react/addons';
+//import Router from 'react-router';
+
+// not using an ES6 transpiler
+//var ReactRouter = require('react-router');
+//var Router = ReactRouter.Router;
+//var Route = ReactRouter.Route;
+//var Link = ReactRouter.Link;
+
+var App = React.createClass({displayName: "App",
+  render() {
+    return (
+      React.createElement("div", null, 
+        React.createElement("ul", null, 
+          React.createElement("li", null, React.createElement(Link, {to: "/search/bob"}, "Bob")), 
+          React.createElement("li", null, React.createElement(Link, {to: "/search/bob", query: {showAge: true}}, "Bob With Query Params")), 
+          React.createElement("li", null, React.createElement(Link, {to: "/search/sally"}, "Sally"))
+        ), 
+        this.props.children
+      )
+    );
+  }
+});
 
 var SearchPage = React.createClass({displayName: "SearchPage",
   notify: function(msg) {
@@ -18,7 +43,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
       if (value.active)
         facets.push(value.name); });
     $.ajax({
-      url: 'docs?keywords=' + encodeURIComponent(keywords) + 
+      url: '/docs?keywords=' + encodeURIComponent(keywords) +
             '&facets=' + facets.join(),
       success: function(data) {
         this.setState({data: data, keywords:keywords});
@@ -35,7 +60,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
       if (value.active)
         facets.push(value.name); });
     $.ajax({
-      url: 'docs?start=' + start + '&keywords=' + encodeURIComponent(this.state.keywords) + 
+      url: '/docs?start=' + start + '&keywords=' + encodeURIComponent(this.state.keywords) +
             '&facets=' + facets.join(),
       success: function(data) {
         var all = { 'total': data.total, 'hits': this.state.data.hits.concat(data.hits) }
@@ -44,7 +69,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
-    });    
+    });
   },
   handleFacetChange: function(name, active) {
     $.each(this.state.extractors, function(index, value) {
@@ -54,7 +79,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
   },
   handleLoadExtractors: function() {
     $.ajax({
-      url: 'annotators',
+      url: '/annotators',
       success: function(data) {
         // add a field to represent active/non-active
         var extractors = data.map(function(it) {
@@ -64,7 +89,7 @@ var SearchPage = React.createClass({displayName: "SearchPage",
           };
         })
         if (this.isMounted()) {
-          this.setState({extractors:extractors}); 
+          this.setState({extractors:extractors});
         }
       }.bind(this),
       error: function(xhr, status, err) {
@@ -88,6 +113,8 @@ var SearchPage = React.createClass({displayName: "SearchPage",
     this.handleKeywordQuery('')
   },
   render: function() {
+    //var index = this.props.params.index
+    console.log(this.props)
     return (
       React.createElement("div", null, 
         React.createElement(Header, {onKeywordQuery: this.handleKeywordQuery, 
@@ -239,10 +266,10 @@ var Result = React.createClass({displayName: "Result",
   onLayerChange: function(name, active) {
     $.each(this.state.layers, function(index, value) {
       if (value.name == name)
-        value.active = active; 
+        value.active = active;
     })
     if (this.isMounted()) {
-      this.setState({layers:this.state.layers}); 
+      this.setState({layers:this.state.layers});
     }
   },
   render: function() {
@@ -250,12 +277,58 @@ var Result = React.createClass({displayName: "Result",
          React.createElement(TextWithAnnotations, {data: this.props.data, layers: this.state.layers}), 
          React.createElement(AnnotationsSelector, {layers: this.state.layers, onLayerChange: this.onLayerChange})
       ));
-  }  
+  }
 })
 
+
+//var App = React.createClass({
+//  render: function() {
+//    return (<div>Hello World</div>)
+//  }
+//})
 
 
 React.render(
   React.createElement(SearchPage, null),
   document.getElementById('page')
 );
+
+
+// Declarative route configuration (could also load this config lazily
+// instead, all you really need is a single root route, you don't need to
+// colocate the entire config).
+//React.render((
+//  <Router history={history}>
+//    <Route path="/" component={App}>
+//      <Route path="search" component={SearchPage}/>
+//    </Route>
+//  </Router>
+//), document.body);
+
+var routes = {
+  path: '/',
+  component: SearchPage,
+  childRoutes: [
+    { path: 'search', component: App },
+    { path: 'search/:index', component: SearchPage },
+  ]
+};
+
+//React.render(<Router history={history} children={routes}/>, document.body);
+
+
+//var Router = ReactRouter.Router;
+//var Route = ReactRouter.Route;
+
+//var routes = (
+//  <Route path="/" component={App} >
+//  </Route>
+//);
+
+console.log(Router)
+
+//React.render(<Router history={history} children={routes}/>, document.body);
+
+//Router.run(routes, function(Handler) {
+//    React.render(<SearchPage/>, document.getElementById('page'));
+//});

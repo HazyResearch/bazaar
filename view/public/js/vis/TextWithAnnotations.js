@@ -1,4 +1,4 @@
-var React = window.React = require('react');
+var React       = require('react');
 
 var SpansVisualization = require('./core/SpansVisualization.js')
 var TokenTagsVisualization = require('./core/TokenTagsVisualization.js')
@@ -41,7 +41,7 @@ var ExtractorsVisualization = function(element, source, annotations) {
    return SpansVisualization(element, extractorOffsets)
 }
 
-var TextWithAnnotations = React.createClass({
+var TextWithAnnotations = React.createClass({displayName: "TextWithAnnotations",
 
   componentDidMount: function() {
   	this.vis = {}
@@ -100,18 +100,18 @@ var TextWithAnnotations = React.createClass({
     var details = []
     if (this.isActive('Details')) {
 	    $.each(this.props.data.annotations, function(i, value) {
-	    	details.push(<div className='extractionBlue'>{JSON.stringify(value)} </div>);
+	    	details.push(React.createElement("div", {className: "extractionBlue"}, JSON.stringify(value), " "));
 	    })
 	    $.each(this.props.data._source, function(name, value) {
 	      if (name != 'content' && name != 'id')
-	        details.push (<div className='extraction'>{name} : {JSON.stringify(value)} </div>);
+	        details.push (React.createElement("div", {className: "extraction"}, name, " : ", JSON.stringify(value), " "));
 	    })
 	}
 
-    var div = (<div><span dangerouslySetInnerHTML={{__html: content}} />
-        <br/><div style={{'color':'green'}}>{this.props.data._id}</div>
-        {details}
-    	</div>)
+    var div = (React.createElement("div", null, React.createElement("span", {dangerouslySetInnerHTML: {__html: content}}), 
+        React.createElement("br", null), React.createElement("div", {style: {'color':'green'}}, this.props.data._id), 
+        details
+    	))
 
     return div;
   }
