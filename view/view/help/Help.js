@@ -15,9 +15,9 @@ var Help = React.createClass({
                     //zIndex:1}
     if (show) {
         columnStyleBackground.width = '300px'
-        wrapperStyle.width = '300px'
+        //wrapperStyle.width = '300px'
     } else {
-        wrapperStyle.width = '0px'
+        //wrapperStyle.width = '0px'
         columnStyleBackground.width = '0px';
     }
 
