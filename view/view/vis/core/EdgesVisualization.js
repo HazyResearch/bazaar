@@ -194,10 +194,8 @@ var DependenciesDrawing = (function() {
 		if (document.getCSSCanvasContext) {
 			ctx = document.getCSSCanvasContext("2d", name, max_x, max_y);
 		} else {
-			canvas = angular.element('<canvas id="' + name +'" width="' + max_x + '" height="' + max_y + '" style="display:none"></canvas>');
-			document.body.appendChild(canvas[0]);
-			//$('document').append(el);
-			//ctx = document.append($('canvas'))
+			canvas = jQuery('<canvas id="' + name +'" width="' + max_x + '" height="' + max_y + '" style="display:none"></canvas>')
+			$(document.body).append(canvas)
 			ctx = canvas[0].getContext('2d');
 		}
 
