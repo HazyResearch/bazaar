@@ -3,6 +3,7 @@ var React = window.React = require('react');
 var SpansVisualization = require('./core/SpansVisualization.js')
 var TokenTagsVisualization = require('./core/TokenTagsVisualization.js')
 var EdgesVisualization = require('./core/EdgesVisualization.js')
+var SentenceUtils = require('./core/SentenceUtils.js')
 
 var TokensVisualization = function(element, source) {
 	return SpansVisualization(element, source.tokenOffsets)
@@ -21,7 +22,9 @@ var LemmasVisualization = function(element, source) {
 }
 
 var DependenciesVisualization = function(element, source) {
-	return EdgesVisualization(element, source.tokenOffsets, source.sentenceOffsets, source.sentenceTokenOffsets, source.sentenceDependencies)
+    // compute sentenceTokenOffsets
+    var sentenceTokenOffsets = SentenceUtils.getSentenceTokenOffsets(source.tokenOffsets, source.sentenceOffsets)
+	return EdgesVisualization(element, source.tokenOffsets, source.sentenceOffsets, sentenceTokenOffsets, source.sentenceDependencies)
 }
 
 var ExtractorsVisualization = function(element, source, annotations) {
