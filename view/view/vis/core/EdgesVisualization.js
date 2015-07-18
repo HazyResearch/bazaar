@@ -6,6 +6,7 @@ var is_firefox = navigator.userAgent.indexOf('Firefox') > -1;
 var is_safari = navigator.userAgent.indexOf("Safari") > -1;
 var is_Opera = navigator.userAgent.indexOf("Presto") > -1;
 if ((is_chrome)&&(is_safari)) {is_safari=false;}
+var is_explorer = (function() { return ((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') && (new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})").exec(navigator.userAgent) != null))); })()
 
 var DependenciesParameters = (function() {
   return {
@@ -115,7 +116,6 @@ var DependenciesDrawing = (function() {
 				{ deviceTokenLefts.push(value*devicePixelRatio); });
 		$.each(tokenWidths, function(i, value)
 				{ deviceTokenWidths.push(value*devicePixelRatio); });
-
 		// not sure if this cast is necessary
 		for (var i=0; i < deps.length; i++) {
 			deps[i].from = parseInt(deps[i].from);
@@ -152,7 +152,6 @@ var DependenciesDrawing = (function() {
 
 		var highestLevels = new Array(len-1);
 		for (var i=0; i < highestLevels.length; i++) highestLevels[i] = 0;
-
 		// for each dep, compute level
 		for (var i=0; i < deps.length; i++) {
 		    var d = deps[i];
@@ -337,6 +336,8 @@ var EdgesVisualization = function(element, tokenOffsets, sentenceOffsets, senten
 			var tokenWidth = (i < tokenLefts.length-1)? tokenLefts[i+1] - tokenLefts[i] : tokenWidths[i];
 
 			if (is_safari) tokenWidth = tokenWidth + 1
+                        var bg = ''
+                        if (is_explorer) bg = 'background:url(' + drawing.canvas[0].toDataURL("image/png") + ') no-repeat -' + left + 'px 0px;';
 
 			var el = goog.dom.createDom('div', { 'style' :
 					'position:absolute;' +
@@ -346,7 +347,7 @@ var EdgesVisualization = function(element, tokenOffsets, sentenceOffsets, senten
 					'z-index:0;' +
 					'background:-webkit-canvas(' + name + ') no-repeat -' + left + 'px 0px;' +
 					'background:-moz-element(#' + name + ') no-repeat -' + left + 'px 0px;' +
-//					'background:' + scope.drawing.canvas[0].toDataURL("image/png") + ' no-repeat + -' + left + 'px 0px;' +
+					bg +
 //					'background:-moz-element(#jojo) no-repeat -' + left + 'px 0px;' +
 					'background-size:' + width + 'px;' +
 					'width:' + tokenWidth + 'px;' +
@@ -405,7 +406,8 @@ var EdgesVisualization = function(element, tokenOffsets, sentenceOffsets, senten
 
 	//element.hide() // avoid reflows
 
-	var sentenceDependencies = [[{"from":0, "to":1, "name":"dep"},{"from":2, "to":1, "name":"dep"}]]
+	//var sentenceDependencies = 
+	//var sentenceDependencies = [[{"from":0, "to":1, "name":"dep"},{"from":2, "to":1, "name":"dep"}]]
 	createWithAnnotations(element, state, state.renderedSpans, tokenOffsets, sentenceOffsets, sentenceTokenOffsets, sentenceDependencies)
 	//element.show()
 

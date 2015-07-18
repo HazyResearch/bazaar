@@ -44,7 +44,7 @@ var CharOffsets = (function() {
 		// binary search for start and end
 		var ns = goog.array.binarySearch(node.childNodes, { readrOffset : start }, offsetComparator);
 		var ne = goog.array.binarySearch(node.childNodes, { readrOffset : end }, offsetComparator);
-		
+
 		if (ns < 0) { ns = -ns-2; }
 		if (ne < 0) { ne = -ne-1; }
 		
@@ -84,9 +84,13 @@ var CharOffsets = (function() {
 		for (var i=0, ii = todo.length; i < ii; i++) {
 			var t = todo[i];
 			var range = goog.dom.Range.createFromNodes(t[0], t[1], t[0], t[2]);
+			var parentNode = t[0].parentNode
+                        var parentNodeOffset = parentNode.readrOffset
+              
 			var el = goog.dom.createDom('span'); //, { 'style':'background-color:green'}); 
 			range.surroundContents(el);
-			indexOffsets(t[0].parentNode, t[0].parentNode.readrOffset);
+			//indexOffsets(t[0].parentNode, t[0].parentNode.readrOffset);
+			indexOffsets(parentNode, parentNodeOffset);
 			sels.push(el);
 		}
 		return { sels:sels };
