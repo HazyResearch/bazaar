@@ -10,3 +10,5 @@ export PGPASSWORD=
 
 source env/bin/activate
 
+PATH="$PWD/node_modules/.bin:$PATH"
+PATH="$PWD/util/elasticsearch-1.6.0/bin:$PATH"

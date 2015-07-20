@@ -30,8 +30,7 @@ echo "script.disable_dynamic: false" >> ${ES_VER}/config/elasticsearch.yml
 cd ..
 
 # for development, we would like to enable auto-reload
-sudo npm i nodemon -g
-sudo npm install -g react-tools
+npm install react-tools nodemon
 
 cd public
 git clone https://github.com/google/closure-library
