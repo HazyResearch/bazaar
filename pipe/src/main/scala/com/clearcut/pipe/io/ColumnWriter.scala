@@ -25,12 +25,12 @@ class ColumnWriter(dir:String) extends Writer {
       if (writers(i) != null) {
         val json = Json.write(annotations(i))
         writers(i).write(json)
-        writers(i).newLine
+        writers(i).newLine()
       }
     }
   }
 
   def close =
     for (w <- writers)
-      if (w != null) w.close
+      if (w != null) w.close()
 }
