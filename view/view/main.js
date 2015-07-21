@@ -29,6 +29,7 @@ var SearchPage = React.createClass({
     return index
   },
   handleKeywordQuery: function(keywords) {
+    console.log('USING SEED ' + this.state.order.seed)
     var index = this.indexName()
     var facets = []
     $.each(this.state.extractors, function(index, value) {
@@ -36,7 +37,8 @@ var SearchPage = React.createClass({
         facets.push(value.name); });
     $.ajax({
       url: '/docs?keywords=' + encodeURIComponent(keywords) +
-            '&facets=' + facets.join() + "&index=" + index,
+            '&facets=' + facets.join() + "&index=" + index + '&orderType=' +
+            this.state.order.type + '&orderSeed=' + this.state.order.seed,
       success: function(data) {
         this.setState({data: data, keywords:keywords});
       }.bind(this),
@@ -54,7 +56,8 @@ var SearchPage = React.createClass({
         facets.push(value.name); });
     $.ajax({
       url: '/docs?start=' + start + '&keywords=' + encodeURIComponent(this.state.keywords) +
-            '&facets=' + facets.join() + '&index=' + index,
+            '&facets=' + facets.join() + '&index=' + index + '&orderType=' +
+            this.state.order.type + '&orderSeed=' + this.state.order.seed,
       success: function(data) {
         var all = { 'total': data.total, 'hits': this.state.data.hits.concat(data.hits) }
         this.setState({data: all, keywords:this.state.keywords});
@@ -94,12 +97,19 @@ var SearchPage = React.createClass({
   handleToggleHelp: function() {
     this.setState({isHelp: !this.state.isHelp})
   },
+  setOrder: function(newOrder) {
+    console.log('setting order now!!! ' + newOrder)
+    console.log('seed is ' + newOrder.seed)
+
+    this.setState({order: newOrder})
+  },
   getInitialState: function() {
     return {
         data: {hits:[]},
         extractors: [],
         keywords: '',
-        isHelp: false
+        isHelp: false,
+        order: {type:'random', seed:'324'}
     }
   },
   componentDidMount: function() {
@@ -117,9 +127,11 @@ var SearchPage = React.createClass({
         <Content style={{'height':'100%'}}
           data={this.state.data}
           extractors={this.state.extractors}
+          order={this.state.order}
           isHelp={this.state.isHelp}
           onFacetChange={this.handleFacetChange}
-          onShowMore={this.handleShowMore} />
+          onShowMore={this.handleShowMore} 
+          onSetOrder={this.setOrder} />
       </div>
     );
   }
@@ -181,7 +193,10 @@ var Content = React.createClass({
       <div className='content'>
         <LeftMenu extractors={this.props.extractors}
           onFacetChange={this.props.onFacetChange} />
-        <Results data={this.props.data} onShowMore={this.props.onShowMore} />
+        <Results data={this.props.data} 
+          order={this.props.order}
+          onShowMore={this.props.onShowMore} 
+          onSetOrder={this.props.onSetOrder} />
         <Help isHelp={this.props.isHelp} />
       </div>
       );
@@ -223,7 +238,18 @@ var Results = React.createClass({
   handleShowMoreClick: function() {
     this.props.onShowMore();
   },
-
+  handleOrderClick: function() {
+    var orderText = React.findDOMNode(this.refs.orderText)
+    console.log('setting state')
+    this.setState({
+      orderVisible:!this.state.orderVisible,
+      orderLeft:orderText.offsetLeft + 'px',
+      orderTop:(orderText.offsetTop + orderText.offsetHeight) + 'px'
+    })
+  },
+  getInitialState: function() {
+     return { orderVisible: false, orderTop:0, orderLeft:0 }
+  },
   render: function() {
     var resultNodes = this.props.data.hits.map(function(result) {
        return (
@@ -237,13 +263,50 @@ var Results = React.createClass({
 
      return (<div style={{marginLeft:'200px', marginRight:'200px'}}>
        <div style={{'textAlign':'right', paddingTop:'10px', paddingBottom:'5px', 'color':'#AAA'}}>
+         <span onClick={this.handleOrderClick} ref='orderText'>order by random &#x25BE;</span>
+         &nbsp;&nbsp;|&nbsp;&nbsp;
          {this.props.data.total} results
+         <OrderByMenu order={this.props.order}
+           orderVisible={this.state.orderVisible}
+           orderLeft={this.state.orderLeft}
+           orderTop={this.state.orderTop} onSetOrder={this.props.onSetOrder} />
        </div>
        {resultNodes}
        {showMoreButton}
        </div>);
   }
 })
+
+var OrderByMenu = React.createClass({
+  handleChange: function(evt) {
+    this.setState({seed: evt.target.value});
+  },
+  getInitialState: function() {
+    return { seed: 14324 }; 
+  },
+  inputSubmit: function() {
+    var val = this.state.seed;
+    this.props.onSetOrder({'type':'random', 'seed':val})
+  },
+  handleKeyDown: function(evt) {
+      if (evt.keyCode == 13 ) {
+          return this.inputSubmit();
+      }
+  },
+  render: function() {
+    var top = this.props.orderTop
+    var left = this.props.orderLeft
+    var display = 'none'
+    if (this.props.orderVisible)
+      display = ''
+
+    return (<div style={{position:'absolute',top:top,left:left,zIndex:'10',display:display, backgroundColor:'white', padding:'20px', border:'1px solid #CCC'}}>
+        <div>note_id</div>
+        <div>random seed <input type='text' ref='seed' value={this.state.seed} onChange={this.handleChange} onKeyDown={this.handleKeyDown} /></div>
+      </div>);
+  }
+})
+
 
 var Result = React.createClass({
   getInitialState: function() {
