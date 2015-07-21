@@ -46,16 +46,16 @@ def list2TSVarray(a_list, quote=True):
 
   if quote:
     for index in range(len(a_list)):
-      if "\\" in str(a_list[index]):
+      if "\\" in unicode(a_list[index]):
         # Replace '\' with '\\\\"' to be accepted by COPY FROM
-        a_list[index] = str(a_list[index]).replace("\\", "\\\\\\\\")
+        a_list[index] = unicode(a_list[index]).replace("\\", "\\\\\\\\")
       # This must happen the previous substitution
-      if "\"" in str(a_list[index]):
+      if "\"" in unicode(a_list[index]):
         # Replace '"' with '\\"' to be accepted by COPY FROM
-        a_list[index] = str(a_list[index]).replace("\"", "\\\\\"")
-    string = ",".join(list(map(lambda x: "\"" + str(x) + "\"", a_list)))
+        a_list[index] = unicode(a_list[index]).replace("\"", "\\\\\"")
+    string = ",".join(list(map(lambda x: "\"" + unicode(x) + "\"", a_list)))
   else:
-    string = ",".join(list(map(lambda x: str(x), a_list)))
+    string = ",".join(list(map(lambda x: unicode(x), a_list)))
   return "{" + string + "}"
 
 def open_file(fname):
@@ -86,7 +86,7 @@ def escape_none(s):
   '''
   if s is None:
     return '\\N'
-  return str(s)
+  return unicode(s).encode('utf-8')
 
 def findTokenOffset(token_offsets, sent_offset):
   '''
@@ -133,22 +133,18 @@ while True:
 
   for sent_id in range(len(sent_token_offsets)):
     sent_from, sent_to = sent_token_offsets[sent_id]
-    sentence_id = str(doc_id) + '_' + str(sent_id)
+    sentence_id = unicode(doc_id) + '_' + unicode(sent_id)
     if sent_deps is not None:
       # e.g.: [[{"name":"det","from":1,"to":0}],[{"name":"advmod","from":1,"to":0},{"name":"advmod","from":1,"to":2}]]
       this_sent_deps = ['%d %s %d' % (d['from'], d['name'], d['to']) for d in sent_deps[sent_id]]
-    try:
-      print '\t'.join([escape_none(x) for x in [ \
-        doc_id, \
-        sent_id, \
-        list2TSVarray([x for x in range(sent_to - sent_from)]), \
-        list2TSVarray( sent_words[ sent_from : sent_to] ) if sent_words is not None else None, \
-        list2TSVarray( poss[ sent_from : sent_to]) if poss is not None else None, \
-        list2TSVarray( ners[ sent_from : sent_to]) if ners is not None else None, \
-        list2TSVarray( lemmas[ sent_from : sent_to]) if lemmas is not None else None, \
-        list2TSVarray( this_sent_deps ) if sent_deps is not None else None, \
-        sentence_id \
-      ]])
-    except UnicodeEncodeError as e:
-      print >>sys.stderr, e
-      continue  # TODO do not handle encoding errors for now
+    print '\t'.join([escape_none(x) for x in [ \
+      doc_id, \
+      sent_id, \
+      list2TSVarray([x for x in range(sent_to - sent_from)]), \
+      list2TSVarray( sent_words[ sent_from : sent_to] ) if sent_words is not None else None, \
+      list2TSVarray( poss[ sent_from : sent_to]) if poss is not None else None, \
+      list2TSVarray( ners[ sent_from : sent_to]) if ners is not None else None, \
+      list2TSVarray( lemmas[ sent_from : sent_to]) if lemmas is not None else None, \
+      list2TSVarray( this_sent_deps ) if sent_deps is not None else None, \
+      sentence_id \
+    ]])
