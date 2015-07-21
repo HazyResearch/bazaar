@@ -80,6 +80,9 @@ router.get('/docs', function(req, res, next) {
   var keywords = req.query.keywords || ''
   var facets = req.query.facets || ''
   var index = req.query.index || 'view'
+  var orderType = req.param('orderType', 'random')
+  var orderSeed = req.param('orderSeed', 1376773391128418000)
+  console.log('USING SEED ' + orderSeed)
 
   var obj = {
     index: index, //process.env.INDEX_NAME,
@@ -88,8 +91,13 @@ router.get('/docs', function(req, res, next) {
     size: limit,
     body: {
       query: {
-        "match_all" : {}
-      },
+        function_score: {
+          query: {
+            "match_all" : {}
+          },
+          "random_score" : { "seed" : orderSeed }
+        }
+      },      
       highlight : {
         fields : {
           content : { "number_of_fragments" : 0 }
@@ -98,8 +106,12 @@ router.get('/docs', function(req, res, next) {
     }
   }
 
+  //if (orderType == 'random') {
+  //}
+
   if (keywords.length > 0) {
-    obj.body.query = {
+    //obj.body.query = {
+    obj.body.query.function_score.query = {
         query_string: {
           "default_field" : "content",
           "fields" : ["content", "_id", "id"],
@@ -133,7 +145,10 @@ router.get('/docs', function(req, res, next) {
       obj.body.filter = filters[0]
   }
 
+
+
   client.search(obj).then(function (body) {
+    console.log(body)
     var docs_context = body.hits
     var docs = body.hits.hits;
    
