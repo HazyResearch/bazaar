@@ -29,6 +29,7 @@ var SearchPage = React.createClass({
     return index
   },
   handleKeywordQuery: function(keywords) {
+    console.log('USING SEED ' + this.state.order.seed)
     var index = this.indexName()
     var facets = []
     $.each(this.state.extractors, function(index, value) {
