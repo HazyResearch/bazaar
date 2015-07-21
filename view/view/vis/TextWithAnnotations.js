@@ -110,8 +110,8 @@ var TextWithAnnotations = React.createClass({
 	        details.push (<div className='extraction'>{name} : {JSON.stringify(value)} </div>);
 	    })
 	}
-
-    var div = (<div><span dangerouslySetInnerHTML={{__html: content}} />
+    //style={{'white-space':'pre-wrap'}}  
+    var div = (<div><span style={{'white-space':'pre-wrap'}} dangerouslySetInnerHTML={{__html: content}} />
         <br/><div style={{'color':'green'}}>{this.props.data._id}</div>
         {details}
     	</div>)
