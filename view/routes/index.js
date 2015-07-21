@@ -82,7 +82,6 @@ router.get('/docs', function(req, res, next) {
   var index = req.query.index || 'view'
   var orderType = req.param('orderType', 'random')
   var orderSeed = req.param('orderSeed', 1376773391128418000)
-  console.log('USING SEED ' + orderSeed)
 
   var obj = {
     index: index, //process.env.INDEX_NAME,
@@ -148,7 +147,6 @@ router.get('/docs', function(req, res, next) {
 
 
   client.search(obj).then(function (body) {
-    console.log(body)
     var docs_context = body.hits
     var docs = body.hits.hits;
    

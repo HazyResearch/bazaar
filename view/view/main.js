@@ -29,7 +29,6 @@ var SearchPage = React.createClass({
     return index
   },
   handleKeywordQuery: function(keywords) {
-    console.log('USING SEED ' + this.state.order.seed)
     var index = this.indexName()
     var facets = []
     $.each(this.state.extractors, function(index, value) {
@@ -98,9 +97,6 @@ var SearchPage = React.createClass({
     this.setState({isHelp: !this.state.isHelp})
   },
   setOrder: function(newOrder) {
-    console.log('setting order now!!! ' + newOrder)
-    console.log('seed is ' + newOrder.seed)
-
     this.setState({order: newOrder})
   },
   getInitialState: function() {
@@ -118,7 +114,6 @@ var SearchPage = React.createClass({
   },
   render: function() {
     //var index = this.props.params.index
-    console.log(this.props)
     return (
       <div>
         <Header onKeywordQuery={this.handleKeywordQuery}
@@ -240,7 +235,6 @@ var Results = React.createClass({
   },
   handleOrderClick: function() {
     var orderText = React.findDOMNode(this.refs.orderText)
-    console.log('setting state')
     this.setState({
       orderVisible:!this.state.orderVisible,
       orderLeft:orderText.offsetLeft + 'px',
