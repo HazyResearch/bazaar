@@ -7,8 +7,8 @@ var Help = React.createClass({
 
     var wrapperStyle = {position:'fixed', top: '0px', right:0, minHeight:'100%', overflowX:'hidden', transition:'width .25s',
                                WebkitTransition:'width .25s', backgroundColor: 'rgb(71, 71, 71)'}
-    var columnStyle = {position:'absolute', top:'50px', paddingTop:'10px', paddingBottom:'10px', paddingLeft:'10px', paddingRight:'10px',
-                                      minHeight:'100%', width:'280px', color:'white', zIndex:3}
+    var columnStyle = {position:'absolute', top:'50px', paddingTop:'10px', paddingBottom:'10px', paddingLeft:'20px', paddingRight:'10px',
+                                      minHeight:'100%', width:'260px', color:'white', zIndex:3}
 
     var columnStyleBackground = {} //{position:'fixed', boxSizing:'borderBox', MozBoxSizing:'border-box', WebkitBoxSizing:'border-box',
                     //top:0, right:0, minHeight:'100%', backgroundColor:'rgba(71,71,71,1)', transition:'width .25s', WebkitTransition:'width .25s',

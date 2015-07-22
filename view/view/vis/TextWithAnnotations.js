@@ -95,6 +95,7 @@ var TextWithAnnotations = React.createClass({
 
   render: function() {
     content = this.props.data._source.content;
+
     // if we have field with keyword highlighting, take that
     if (this.props.data.highlight != null &&
         this.props.data.highlight.content != null) {
@@ -110,6 +111,11 @@ var TextWithAnnotations = React.createClass({
 	        details.push (<div className='extraction'>{name} : {JSON.stringify(value)} </div>);
 	    })
 	}
+
+   // recplace special chars
+    //content = content.replace('\r', ' ')
+    content = content.replace(/\r/g, ' ');
+
     //style={{'white-space':'pre-wrap'}}  
     var div = (<div><span style={{'white-space':'pre-wrap'}} dangerouslySetInnerHTML={{__html: content}} />
         <br/><div style={{'color':'green'}}>{this.props.data._id}</div>
