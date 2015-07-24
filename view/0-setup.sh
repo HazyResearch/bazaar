@@ -30,7 +30,7 @@ echo "script.disable_dynamic: false" >> ${ES_VER}/config/elasticsearch.yml
 cd ..
 
 # for development, we would like to enable auto-reload
-npm install react-tools nodemon
+npm install react-tools nodemon coffee-script
 
 cd public
 [ -e closure-library/.git ] ||
