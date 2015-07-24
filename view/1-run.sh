@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+cd "$(dirname "$0")"
+. env.sh
+set -eu
 
 if [[ $(uname) = Darwin ]] &&
     osascript -e 'get path to application "iTerm"' &>/dev/null; then
@@ -6,8 +9,10 @@ if [[ $(uname) = Darwin ]] &&
     start() { ( source ./util/tab && tab "$@" ); }
 else
     # otherwise, just run the process
-    start() { local title=$1; shift; "$@" & }
+    pids=()
+    start() { local title=$1; shift; "$@" & pids+=($!); }
     trap wait EXIT
+    trap 'kill -TERM "${pids[@]}"' HUP INT TERM
 fi
 
 # launch elasticsearch

@@ -8,11 +8,11 @@ For an example, visit http://api.clearcutcorp.com/view.
 
 ## Installation
 
-Run `./setup.sh` to install dependencies.
+Run `./0-setup.sh` to install dependencies.
 
 Make sure you run `source env.sh` each time you run view.
 
-You can use `./run.sh` to run the two servers (elasticsearch and nodejs). 
+You can use `./1-run.sh` to run the two servers (elasticsearch and nodejs). 
 
 ## How to index your data
 
@@ -25,9 +25,9 @@ You can use `./run.sh` to run the two servers (elasticsearch and nodejs).
 * Create the elasticsearch indexes by running:
 
   ```
-  ./create_index.sh
-  ./refresh-documents.py
-  ./refresh-annotations.py
+  ./2-create-index.sh
+  ./3-index-docs-from-deepdive.sh
+  ./3-index-annotations-from-deepdive.sh
   ``` 
 
 * Visit `http://localhost:3000`.

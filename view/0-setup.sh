@@ -33,6 +33,7 @@ cd ..
 npm install react-tools nodemon
 
 cd public
+[ -e closure-library/.git ] ||
 git clone https://github.com/google/closure-library
 
 

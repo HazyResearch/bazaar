@@ -5,7 +5,7 @@ export INDEX_NAME=view
 export PGPORT=5432
 export PGHOST=localhost
 export DBNAME=deepdive_spouse_tsv
-export PGUSER=raphael
+export PGUSER=$USER
 export PGPASSWORD=
 
 source env/bin/activate
