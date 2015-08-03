@@ -13,7 +13,7 @@ We assume that your input has the following format. There's one line per documen
 You can run the NLP pipeline on 1 core as follows:
 
 ```bash
-cat input.json | ./run.sh -i json -k "item_id" -v "content"
+cat input.json | ./run.sh -i json -k "item_id" -v "content" > output.tsv
 ```
 
 You can run the NLP pipeline on 16 cores as follows:

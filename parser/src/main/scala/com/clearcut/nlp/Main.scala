@@ -14,7 +14,7 @@ object Main extends App {
                     fileName: String = null,
                     formatIn: String = "json",
                     documentKey: String = "text",
-                    idKey: String = "id",
+                    idKeys: String = "id",
                     maxSentenceLength: String = "100",
                     annotators: String = "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
 
@@ -28,9 +28,9 @@ object Main extends App {
     opt[String]('v', "valueKey") action { (x, c) =>
       c.copy(documentKey = x)
     } text("JSON key that contains the document, for example \"documents.text\"")
-    opt[String]('k', "idKey") action { (x, c) =>
-      c.copy(idKey = x)
-    } text("JSON key that contains the document id, for example \"documents.id\"")
+    opt[String]('k', "idKeys") action { (x, c) =>
+      c.copy(idKeys = x)
+    } text("JSON keys that contains the document id and other fields, for example \"doc-id,section-id\"")
     opt[String]('l', "maxLength") action { (x, c) =>
       c.copy(maxSentenceLength = x)
     } text("Maximum length of sentences to parse (makes things faster) (default: 100)")
@@ -90,23 +90,19 @@ object Main extends App {
       1000 * 1000
     )
   }
-  var reader:Iterator[(String,String)] = if (conf.formatIn.equals("json"))
-    new JSONReader(input, conf.idKey, conf.documentKey)
-  else
-    new TSVReader(input, 0, 1)
 
-  reader.foreach { case (documentId, documentStr) =>
-
-      System.err.println(s"Parsing document ${documentId}...")
-
+  // TODO: extend to handle tsv input again...
+  val docIdKeys:Array[String] = conf.idKeys.split(",").map(_.trim)
+  var reader:Iterator[(Array[String], String)] = new JSONReader(input,docIdKeys,conf.documentKey)
+  reader.foreach { case (docIds, documentStr) =>
+      System.err.println(s"Parsing document ${docIds(0)}...")
       try {
         // Output a TSV row for each sentence
         dp.parseDocumentString(documentStr).sentences.zipWithIndex
             .foreach { case (sentenceResult, sentence_idx) =>
-
-          if (documentId != "") {
-            val outline = List(
-              documentId,
+          if (docIds(0) != "") {
+            val idsOutline = docIds
+            val mainOutline = List(
               sentence_idx + 1,
               dp.replaceChars(sentenceResult.sentence),
               dp.list2TSVArray(sentenceResult.words),
@@ -117,7 +113,8 @@ object Main extends App {
               dp.list2TSVArray(sentenceResult.dep_labels),
               dp.intList2TSVArray(sentenceResult.dep_parents)
               // dp.list2TSVArray(sentenceResult.collapsed_deps)
-            ).mkString("\t")
+            )
+            val outline = (idsOutline ++ mainOutline).mkString("\t")
             if (output != null) {
               output.append(outline)
               output.newLine()
