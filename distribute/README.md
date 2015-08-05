@@ -24,7 +24,7 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     ```bash
     fab copy_parse_collect > parse.log
     ```
-    Tip: You can schedule the remote terminals to be terminated on task completion automatically:
+    Tip: You can schedule the remote machines to be terminated on task completion automatically:
     ```bash
     fab copy_parse_collect terminate > parse.log
     ```
