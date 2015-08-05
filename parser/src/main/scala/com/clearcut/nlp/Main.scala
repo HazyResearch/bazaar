@@ -130,7 +130,7 @@ object Main extends App {
              new OutputStreamWriter(new FileOutputStream(erroutFile), "UTF-8"),
              4096
            )
-           //errout.write(s"Warning: skipped line ${idx} due to error in corenlp: ${line}\n")
+           errout.write(s"Warning: skipped line due to error in corenlp: ${documentStr}\n")
            e.printStackTrace(new java.io.PrintWriter(errout))
       }
   }
