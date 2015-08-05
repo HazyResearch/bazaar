@@ -20,17 +20,22 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     fab install > install.log
     ```
 
-3. Copy chunks to remote machines, run parser on remote machines, and collect results
+3. Copy chunks to remote machines, run parser on remote machines and collect results:
     ```bash
-    fab copy_parse_collect
+    fab copy_parse_collect > parse.log
+    ```
+    Tip: You can schedule the remote terminals to be terminated on task completion automatically:
+    ```bash
+    fab copy_parse_collect terminate > parse.log
     ```
     Tip: You can provide additional parameters to override defaults:
     ```bash
     fab copy_parse_collect:input=test/input.json,batch_size=1000,parallelism=8,key_id='item_id',content_id='content' > parse.log
     ```
     *Note: if `batch_size` is left unspecified, it will be computed automatically (as `(# lines) / ((# of machines) * parallelism))`)*.  See [Parser](/parser) documentation for details on parameters.
+    
 
-6.  Terminate remote machines
+6.  If not automatically terminated as above, or if error occured, terminate remote machines:
     ```bash
     fab terminate
     ```
