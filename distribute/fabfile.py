@@ -33,12 +33,34 @@ def install():
 
 @task
 @parallel
-def copy(input='test/input.json',batch_size=1000):
-    ensure_hosts()
-    directory = env.directories[env.host_string]
+def restage():
+  ensure_hosts()
+  with prefix('export PATH=~/jdk1.8.0_45/bin:$PATH'):
+    r = run('cd ~/parser && sbt/sbt stage')
+    if not r.return_code == 0:
+      print('ERROR. Aborting')
+      sys.exit()    
+  
+@task
+@hosts('localhost')
+def split(input='test/input.json',batch_size=1000):
     local('rm -rf segments')
     local('mkdir -p segments')
     local('split -a 5 -l ' + str(batch_size) + ' ' + input + ' segments/')
+
+def get_remote_write_dir():
+  if read_cloud() == 'ec-2':
+    directory = '/mnt'
+  else:
+    directory = env.directories[env.host_string]
+  return directory
+
+@task
+@parallel
+def copy_to_servers():
+    ensure_hosts()
+
+    directory = get_remote_write_dir()
     user = run('whoami')
     run('sudo chown ' + user + ' ' + directory)
     run('rm -rf ' + directory + '/segments')
@@ -56,6 +78,12 @@ def copy(input='test/input.json',batch_size=1000):
             put(local_path=f, remote_path=directory + '/segments')
 
 @task
+@runs_once
+def copy(input='test/input.json',batch_size=1000):
+  execute(split, input=input, batch_size=batch_size)
+  execute(copy_to_servers)
+
+@task
 @parallel
 def echo():
     ensure_hosts()
@@ -65,28 +93,84 @@ def echo():
 @parallel
 def parse(parallelism=2, key_id='item_id', content_id='content'):
     ensure_hosts()
-    directory = env.directories[env.host_string]
+    directory = get_remote_write_dir()
     with prefix('export PATH=~/jdk1.8.0_45/bin:$PATH'):
         run('find ' + directory + '/segments -name "*" -type f 2>/dev/null -print0 | ' +
           '(cd ~/parser && xargs -0 -P ' + str(parallelism) + ' -L1 bash -c \'./run.sh -i json -k ' +
           key_id + ' -v ' + content_id + ' -f \"$0\"\')')
 
 @task
+@parallel
+def clear_for_reparse():
+  ensure_hosts()
+  directory = get_remote_write_dir()
+  run('rm -rf ' + directory + '/segments/*.parsed')
+  run('rm -rf ' + directory + '/segments/*.failed')
+
+@task
+@parallel
+def collect_from_nodes():
+  ensure_hosts()
+  directory = get_remote_write_dir()
+
+  # collect all files ending in .parsed and .failed
+  output = run('find ' + directory + '/segments/ -name "*.*" -type f')
+  if output == '':
+     print('Warning: No result segments on node') 
+  else:
+     files = output.rstrip().split('\r\n')
+     for f in files:
+         path = f 
+         get(local_path='segments', remote_path=path)
+
+@task
+@hosts('localhost')
+def cat_result():
+  local('rm -f result')
+  local('find ./segments -name "*.parsed" -type f -print0 | xargs -0 cat >>result')
+  print('Done. You can now load the result into your database.')
+
+@task
+@runs_once
 def collect():
-    ensure_hosts()
-    directory = env.directories[env.host_string]
-    # collect all files ending in .parsed and .failed
-    output = run('find ' + directory + '/segments/ -name "*.*" -type f')
-    if output == '':
-       print('Warning: No result segments on node') 
-    else:
-       files = output.rstrip().split('\r\n')
-       for f in files:
-           path = f 
-           get(local_path='segments', remote_path=path)
-       local('rm -f result')
-       local('find ./segments -name "*.parsed" -type f -print0 | xargs -0 cat >>result')
-       print('Done. You can now load the result into your database.')
+  execute(collect_from_nodes)
+  execute(cat_result)
+
+def num_lines(filepath):
+  with open(filepath, 'rb') as f:
+    for i,l in enumerate(f):
+      pass
+  return i+1
+
+@task
+@hosts('localhost')
+def copy_parse_collect(input=None, batch_size=None, parallelism=2, key_id='item_id', content_id='content'):
+  """
+  Wrapper function to split and copy file to servers, parse, and collect
+  If batch_size is None, it will be automatically calculated based on number of machines
+  and specified parallelism
+  Optionally terminates servers when parsing is done
+  """
+  if input is None:
+    print('Please specify input file to parse.')
+    exit(0)
+  ensure_hosts()
+  num_machines = num_lines('.state/HOSTS')
+  print('Preparing to run on %s machines with PARALLELISM=%s' % (num_machines, parallelism))
+  if batch_size is None:
+    batch_size = num_lines(input) / (num_machines * int(parallelism))
+
+  # Copy the files to the remote machines
+  execute(copy, input=input, batch_size=batch_size)
+  
+  # Sometimes coreNLP doesn't download / something else is messed up in install- restage here to ensure compiled
+  execute(restage)
+
+  # Parse
+  execute(parse, parallelism=parallelism, key_id=key_id, content_id=content_id)
+
+  # Collect
+  execute(collect)
 
 @task
 @hosts('localhost')
