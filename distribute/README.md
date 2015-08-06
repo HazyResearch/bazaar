@@ -7,7 +7,7 @@ finally terminates the machines.
 
 Before you begin, follow the instructions in [Setup](#setup) to install Distribute.
 
-1.  Launch instances on ec-2 or azure.
+1.  Launch instances on ec-2 or azure.  **Note: For ec-2, the General Purpose instance type is recommended (e.g. `m3.2xlarge`); instace types with lower memory/core may cause parser to abort.**
 
     ```bash
     fab launch:cloud=ec2,num=1
@@ -17,35 +17,25 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
 
 2.  Install dependencies on remote machines
     ```bash
-    fab install
+    fab install > install.log
     ```
 
-3.  Copy chunks to remote machines
+3. Copy chunks to remote machines, run parser on remote machines and collect results:
     ```bash
-    fab copy
+    fab copy_parse_collect > parse.log
+    ```
+    Tip: You can schedule the remote machines to be terminated on task completion automatically:
+    ```bash
+    fab copy_parse_collect terminate > parse.log
     ```
     Tip: You can provide additional parameters to override defaults:
     ```bash
-    fab copy:input=test/input.json,batch_size=1000
+    fab copy_parse_collect:input=test/input.json,batch_size=1000,parallelism=8,key_id='item_id',content_id='content' > parse.log
     ```
-
-4.  Run parser on remote machines
-    ```bash
-    fab parse
-    ```
+    *Note: if `batch_size` is left unspecified, it will be computed automatically (as `(# lines) / ((# of machines) * parallelism))`)*.  See [Parser](/parser) documentation for details on parameters.  Note in particular that commas need to be backslash-escaped when passed in as parameters.
     
-    Tip: Again, you can provide additional parameters to override defaults:
-    ```bash
-    fab parse:parallelism=2,key_id='item_id',content_id='content'
-    ```
-    See [Parser](/parser) documentation for details.
 
-5.  Collect results
-    ```bash
-    fab collect
-    ```
-
-6.  Terminate remote machines
+6.  If not automatically terminated as above, or if error occured, terminate remote machines:
     ```bash
     fab terminate
     ```
