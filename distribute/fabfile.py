@@ -46,7 +46,7 @@ def restage():
 def split(input='test/input.json',batch_size=1000):
     local('rm -rf segments')
     local('mkdir -p segments')
-    local('split -a 5 -l ' + str(batch_size) + ' ' + input + ' segments/')
+    local('cat ' + input + ' | shuf | split -a 5 -l ' + str(batch_size) + ' - segments/')
 
 def get_remote_write_dir():
   if read_cloud() == 'ec-2':
