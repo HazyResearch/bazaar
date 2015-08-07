@@ -102,7 +102,7 @@ object Main extends App {
     register = new BufferedWriter(
       new OutputStreamWriter(new FileOutputStream(registerFile), "UTF-8")
     )
-    register.write(s"0");
+    register.write(s"${conf.fileName}:0\n");
     register.flush();
     register.close();
   }
@@ -157,7 +157,7 @@ object Main extends App {
     register = new BufferedWriter(
       new OutputStreamWriter(new FileOutputStream(registerFile), "UTF-8")
     )
-    register.write(s"1");
+    register.write(s"${conf.fileName}:1\n");
     register.flush();
     register.close();
   }
