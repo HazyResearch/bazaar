@@ -101,6 +101,14 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
 
 @task
 @parallel
+def get_registers():
+  directory = get_remote_write_dir()
+  find_cmd = 'find %s/segments -name "*.reg" -type f 2>/dev/null' % directory
+  names = run(find_cmd).split('\n')
+  vals = [int(v) for v in run(find_cmd + ' -print0 | xargs -0 -L1 head')]
+
+@task
+@parallel
 def clear_for_reparse():
   ensure_hosts()
   directory = get_remote_write_dir()
