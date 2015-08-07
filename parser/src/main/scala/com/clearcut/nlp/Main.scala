@@ -107,9 +107,12 @@ object Main extends App {
     register.close();
   }
 
-  // TODO: extend to handle tsv input again...
   val docIdKeys:Array[String] = conf.idKeys.split(",").map(_.trim)
-  var reader:Iterator[(Array[String], String)] = new JSONReader(input,docIdKeys,conf.documentKey)
+  var reader:Iterator[(Array[String], String)] = if (conf.formatIn.equals("json"))
+    new JSONReader(input, docIdKeys, conf.documentKey)
+  else
+    new TSVReader(input, docIdKeys.zipWithIndex.map { case (id, i) => i }, docIdKeys.length + 1)
+
   reader.foreach { case (docIds, documentStr) =>
       System.err.println(s"Parsing document ${docIds(0)}...")
       try {
