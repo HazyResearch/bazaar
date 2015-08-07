@@ -24,7 +24,7 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     ```bash
     fab copy_parse_collect > parse.log
     ```
-    Tip: You can schedule the remote machines to be terminated on task completion automatically:
+    Tip: You can schedule the remote machines to be terminated on task completion automatically; note though that if the `parse` operation fails, nodes may not terminate:
     ```bash
     fab copy_parse_collect terminate > parse.log
     ```
@@ -32,7 +32,8 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     ```bash
     fab copy_parse_collect:input=test/input.json,batch_size=1000,parallelism=8,key_id='item_id',content_id='content' > parse.log
     ```
-    *Note: if `batch_size` is left unspecified, it will be computed automatically (as `(# lines) / ((# of machines) * parallelism))`)*.  See [Parser](/parser) documentation for details on parameters.  Note in particular that commas need to be backslash-escaped when passed in as parameters.
+    If `batch_size` is left unspecified, it will be computed automatically as `(# lines) / ((# of machines) * parallelism))`.
+    **Note however that this may lead to overly-large segment sizes which potentially cause memory problems**.  See [Parser](/parser) documentation for details on parser parameters. *Note also that commas need to be backslash-escaped when passed in as parameters.*
     
 
 6.  If not automatically terminated as above, or if error occured, terminate remote machines:
