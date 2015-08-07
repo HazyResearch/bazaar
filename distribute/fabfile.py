@@ -1,6 +1,7 @@
 from fabric.api import *
 from fabric.tasks import execute
 import os
+import re
 
 def get_platform():
     with hide('everything'):
@@ -103,28 +104,38 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
 @parallel
 def get_registers():
   directory = get_remote_write_dir()
-  registers = run('find ' + directory + '/segments -name "*.reg" -type f 2>/dev/null -print0 | xargs -0 -L1 head')
+  registers = run('find ' + directory + '/segments -name "*.reg" -type f 2>/dev/null -print0 | xargs -0 -L1 head', quiet=True)
   return [reg.strip() for reg in registers.split('\n')]
 
-#@task
-#@hosts('localhost')
-#def get_segs():
-#  segs = run('find segments -name "*" -type f 2>/dev/null')
-#  for seg in segs:
-
 @task
-@runs_once
+@hosts('localhost')
 def get_status():
+
+  # Get total segments count
+  total = len(filter(lambda f : re.search(r'\..*$', f) is None, os.listdir('segments')))
+
+  # Get registers
   results = execute(get_registers)
-  with open('parse_status', 'wb') as f:
+
+  # Parse registers & save status report
+  with open('parse_status.txt', 'wb') as f:
+    completed = 0
+    pending = 0
     for server_name, registers in results.iteritems():
       for reg in registers:
         if len(reg.strip()) == 0:
           continue
         seg, status_code = reg.split(':')
-        status = "Completed" if status_code == "1" else "Pending"
+        status_code = int(status_code)
+        completed += status_code
+        pending += 1 - status_code
+        status = "Completed" if status_code == 1 else "Pending"
         f.write("%s : %s [node=%s]\n" % (seg, status, server_name))
-    print "Status report written to parse_status."
+    percent_done = 100*(float(completed)/total) if total > 0 else 0.0
+    print "\nStatus:"
+    print "Completed segments: %s / %s (%d%%)" % (completed, total, percent_done)
+    print "Currently processing: %s" % pending
+    print "Detailed report written to parse_status.txt"
 
 @task
 @parallel
