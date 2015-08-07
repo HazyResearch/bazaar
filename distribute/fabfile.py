@@ -104,14 +104,27 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
 def get_registers():
   directory = get_remote_write_dir()
   registers = run('find ' + directory + '/segments -name "*.reg" -type f 2>/dev/null -print0 | xargs -0 -L1 head')
-  return registers
+  return [reg.strip() for reg in registers.split('\n')]
+
+#@task
+#@hosts('localhost')
+#def get_segs():
+#  segs = run('find segments -name "*" -type f 2>/dev/null')
+#  for seg in segs:
 
 @task
 @runs_once
 def get_status():
   results = execute(get_registers)
-  for k,v in results.iteritems():
-    print "%s:%s" % (k,v)
+  with open('parse_status', 'wb') as f:
+    for server_name, registers in results.iteritems():
+      for reg in registers:
+        if len(reg.strip()) == 0:
+          continue
+        seg, status_code = reg.split(':')
+        status = "Completed" if status_code == "1" else "Pending"
+        f.write("%s : %s [node=%s]\n" % (seg, status, server_name))
+    print "Status report written to parse_status."
 
 @task
 @parallel
