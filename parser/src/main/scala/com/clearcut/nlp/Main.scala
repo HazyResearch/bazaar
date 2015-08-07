@@ -11,10 +11,11 @@ object Main extends App {
 
   // Parse command line options
   case class Config(serverPort: Integer = null,
+                    register: Boolean = true,
                     fileName: String = null,
                     formatIn: String = "json",
                     documentKey: String = "text",
-                    idKey: String = "id",
+                    idKeys: String = "id",
                     maxSentenceLength: String = "100",
                     annotators: String = "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
 
@@ -28,9 +29,9 @@ object Main extends App {
     opt[String]('v', "valueKey") action { (x, c) =>
       c.copy(documentKey = x)
     } text("JSON key that contains the document, for example \"documents.text\"")
-    opt[String]('k', "idKey") action { (x, c) =>
-      c.copy(idKey = x)
-    } text("JSON key that contains the document id, for example \"documents.id\"")
+    opt[String]('k', "idKeys") action { (x, c) =>
+      c.copy(idKeys = x)
+    } text("JSON keys that contains the document id and other fields, for example \"doc-id,section-id\"")
     opt[String]('l', "maxLength") action { (x, c) =>
       c.copy(maxSentenceLength = x)
     } text("Maximum length of sentences to parse (makes things faster) (default: 100)")
@@ -43,6 +44,9 @@ object Main extends App {
     opt[Int]('p', "serverPort") action { (x, c) =>
       c.copy(serverPort = x)
     } text("Run as an HTTP service")
+    opt[Boolean]('r', "register") action { (x, c) =>
+      c.copy(register = x)
+    } text("Register task start and complete in simple .reg file")
   }
 
   val conf = optionsParser.parse(args, Config()) getOrElse {
@@ -77,6 +81,7 @@ object Main extends App {
   var input = Source.stdin
   var output: BufferedWriter = null
   var errout: BufferedWriter = null
+  var register: BufferedWriter = null
   if (conf.fileName != null) {
     if (!new File(conf.fileName).exists) {
       System.err.println("Input file does not exist: " + conf.fileName)
@@ -90,23 +95,33 @@ object Main extends App {
       1000 * 1000
     )
   }
-  var reader:Iterator[(String,String)] = if (conf.formatIn.equals("json"))
-    new JSONReader(input, conf.idKey, conf.documentKey)
+
+  // Save a .reg file which has contents "0" if started & in progress, "1" if completed
+  if (conf.fileName != null && conf.register) {
+    val registerFile = new File(conf.fileName + ".reg")
+    register = new BufferedWriter(
+      new OutputStreamWriter(new FileOutputStream(registerFile), "UTF-8")
+    )
+    register.write(s"${conf.fileName}:0\n");
+    register.flush();
+    register.close();
+  }
+
+  val docIdKeys:Array[String] = conf.idKeys.split(",").map(_.trim)
+  var reader:Iterator[(Array[String], String)] = if (conf.formatIn.equals("json"))
+    new JSONReader(input, docIdKeys, conf.documentKey)
   else
-    new TSVReader(input, 0, 1)
+    new TSVReader(input, docIdKeys.zipWithIndex.map { case (id, i) => i }, docIdKeys.length + 1)
 
-  reader.foreach { case (documentId, documentStr) =>
-
-      System.err.println(s"Parsing document ${documentId}...")
-
+  reader.foreach { case (docIds, documentStr) =>
+      System.err.println(s"Parsing document ${docIds(0)}...")
       try {
         // Output a TSV row for each sentence
         dp.parseDocumentString(documentStr).sentences.zipWithIndex
             .foreach { case (sentenceResult, sentence_idx) =>
-
-          if (documentId != "") {
-            val outline = List(
-              documentId,
+          if (docIds(0) != "") {
+            val idsOutline = docIds
+            val mainOutline = List(
               sentence_idx + 1,
               dp.replaceChars(sentenceResult.sentence),
               dp.list2TSVArray(sentenceResult.words),
@@ -117,7 +132,8 @@ object Main extends App {
               dp.list2TSVArray(sentenceResult.dep_labels),
               dp.intList2TSVArray(sentenceResult.dep_parents)
               // dp.list2TSVArray(sentenceResult.collapsed_deps)
-            ).mkString("\t")
+            )
+            val outline = (idsOutline ++ mainOutline).mkString("\t")
             if (output != null) {
               output.append(outline)
               output.newLine()
@@ -133,11 +149,21 @@ object Main extends App {
              new OutputStreamWriter(new FileOutputStream(erroutFile), "UTF-8"),
              4096
            )
-           //errout.write(s"Warning: skipped line ${idx} due to error in corenlp: ${line}\n")
+           errout.write(s"Warning: skipped line due to error in corenlp: ${documentStr}\n")
            e.printStackTrace(new java.io.PrintWriter(errout))
       }
   }
 
+  // Save a .reg file which has contents "0" if started & in progress, "1" if completed
+  if (conf.fileName != null && conf.register) {
+    val registerFile = new File(conf.fileName + ".reg")
+    register = new BufferedWriter(
+      new OutputStreamWriter(new FileOutputStream(registerFile), "UTF-8")
+    )
+    register.write(s"${conf.fileName}:1\n");
+    register.flush();
+    register.close();
+  }
   if (output != null) {
     output.flush()
     output.close()

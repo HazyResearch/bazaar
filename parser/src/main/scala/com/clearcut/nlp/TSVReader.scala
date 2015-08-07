@@ -3,8 +3,8 @@ package com.clearcut.nlp
 import scala.io.BufferedSource
 
 class TSVReader(input:BufferedSource,
-                 idCol:Int, documentCol:Int)
-  extends Iterator[(String,String)] {
+                 idCols:Array[Int], documentCol:Int)
+  extends Iterator[(Array[String], String)] {
 
   var it = input.getLines.zipWithIndex
   var _next = fetchNext()
@@ -12,21 +12,21 @@ class TSVReader(input:BufferedSource,
   override def hasNext: Boolean =
     _next != null
 
-  override def next(): (String, String) = {
+  override def next(): (Array[String], String) = {
     val n = _next
     _next = fetchNext()
     n
   }
 
-  private def fetchNext(): (String,String) = {
-    var n:(String,String) = null
+  private def fetchNext(): (Array[String], String) = {
+    var n:(Array[String], String) = null
     while (n == null && it.hasNext) {
       val (line, num) = it.next
       val tsvArr = line.trim.split("\t")
-      if (tsvArr.length >= 2) {
-        val documentId = tsvArr(0)
-        val documentStr = tsvArr(1)
-        n = (documentId, documentStr)
+      if (tsvArr.length >= idCols.length + 1) {
+        val documentIds = idCols.map(idc => tsvArr(idc))
+        val documentStr = tsvArr(documentCol)
+        n = (documentIds, documentStr)
       } else {
         System.err.println(s"Warning: skipped malformed line ${num}: ${line}")
       }
