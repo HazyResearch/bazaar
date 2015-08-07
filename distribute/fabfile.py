@@ -12,7 +12,6 @@ def is_installed(cmd):
         with hide('everything'):
             result = run('command -v ' + cmd)
             return result.return_code == 0
-
 @task
 @hosts('localhost')
 def launch(cloud, num):
@@ -180,6 +179,9 @@ def num_lines(filepath):
       pass
   return i+1
 
+# Large batch sizes seem to cause memory errors...
+MAX_BATCH_SIZE=5000
+
 @task
 @hosts('localhost')
 def copy_parse_collect(input=None, batch_size=None, parallelism=2, key_id='item_id', content_id='content'):
@@ -187,7 +189,6 @@ def copy_parse_collect(input=None, batch_size=None, parallelism=2, key_id='item_
   Wrapper function to split and copy file to servers, parse, and collect
   If batch_size is None, it will be automatically calculated based on number of machines
   and specified parallelism
-  Optionally terminates servers when parsing is done
   """
   if input is None:
     print('Please specify input file to parse.')
@@ -196,12 +197,12 @@ def copy_parse_collect(input=None, batch_size=None, parallelism=2, key_id='item_
   num_machines = num_lines('.state/HOSTS')
   print('Preparing to run on %s machines with PARALLELISM=%s' % (num_machines, parallelism))
   if batch_size is None:
-    batch_size = num_lines(input) / (num_machines * int(parallelism))
+    batch_size = min(num_lines(input) / (num_machines * int(parallelism)), MAX_BATCH_SIZE)
 
   # Copy the files to the remote machines
   execute(copy, input=input, batch_size=batch_size)
   
-  # Sometimes coreNLP doesn't download / something else is messed up in install- restage here to ensure compiled
+  # Sometimes coreNLP doesn't download- restage here to ensure compiled
   execute(restage)
 
   # Parse
