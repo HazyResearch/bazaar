@@ -35,8 +35,13 @@ Before you begin, follow the instructions in [Setup](#setup) to install Distribu
     If `batch_size` is left unspecified, it will be computed automatically as `(# lines) / ((# of machines) * parallelism))`.
     **Note however that this may lead to overly-large segment sizes which potentially cause memory problems**.  See [Parser](/parser) documentation for details on parser parameters. *Note also that commas need to be backslash-escaped when passed in as parameters.*
     
+4.  To check status of distributed parse, run:
+    ```bash
+    fab get_status
+    ```
+    This will save a list of segments completed ("Completed") and currently being processed ("Pending") to `parse_status`.
 
-6.  If not automatically terminated as above, or if error occured, terminate remote machines:
+5.  If not automatically terminated as above, or if error occured, terminate remote machines:
     ```bash
     fab terminate
     ```
