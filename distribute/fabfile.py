@@ -103,9 +103,15 @@ def parse(parallelism=2, key_id='item_id', content_id='content'):
 @parallel
 def get_registers():
   directory = get_remote_write_dir()
-  find_cmd = 'find %s/segments -name "*.reg" -type f 2>/dev/null' % directory
-  names = run(find_cmd).split('\n')
-  vals = [int(v) for v in run(find_cmd + ' -print0 | xargs -0 -L1 head')]
+  registers = run('find ' + directory + '/segments -name "*.reg" -type f 2>/dev/null -print0 | xargs -0 -L1 head')
+  return registers
+
+@task
+@runs_once
+def get_status():
+  results = execute(get_registers)
+  for k,v in results.iteritems():
+    print "%s:%s" % (k,v)
 
 @task
 @parallel
