@@ -11,6 +11,7 @@ object Main extends App {
 
   // Parse command line options
   case class Config(serverPort: Integer = null,
+                    register: Boolean = true,
                     fileName: String = null,
                     formatIn: String = "json",
                     documentKey: String = "text",
@@ -43,6 +44,9 @@ object Main extends App {
     opt[Int]('p', "serverPort") action { (x, c) =>
       c.copy(serverPort = x)
     } text("Run as an HTTP service")
+    opt[Boolean]('r', "register") action { (x, c) =>
+      c.copy(register = x)
+    } text("Register task start and complete in simple .reg file")
   }
 
   val conf = optionsParser.parse(args, Config()) getOrElse {
@@ -77,6 +81,7 @@ object Main extends App {
   var input = Source.stdin
   var output: BufferedWriter = null
   var errout: BufferedWriter = null
+  var register: BufferedWriter = null
   if (conf.fileName != null) {
     if (!new File(conf.fileName).exists) {
       System.err.println("Input file does not exist: " + conf.fileName)
@@ -89,6 +94,17 @@ object Main extends App {
       new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"),
       1000 * 1000
     )
+  }
+
+  // Save a .reg file which has contents "0" if started & in progress, "1" if completed
+  if (conf.fileName != null && conf.register) {
+    val registerFile = new File(conf.fileName + ".reg")
+    register = new BufferedWriter(
+      new OutputStreamWriter(new FileOutputStream(registerFile), "UTF-8")
+    )
+    register.write(s"0");
+    register.flush();
+    register.close();
   }
 
   // TODO: extend to handle tsv input again...
@@ -135,6 +151,16 @@ object Main extends App {
       }
   }
 
+  // Save a .reg file which has contents "0" if started & in progress, "1" if completed
+  if (conf.fileName != null && conf.register) {
+    val registerFile = new File(conf.fileName + ".reg")
+    register = new BufferedWriter(
+      new OutputStreamWriter(new FileOutputStream(registerFile), "UTF-8")
+    )
+    register.write(s"1");
+    register.flush();
+    register.close();
+  }
   if (output != null) {
     output.flush()
     output.close()
