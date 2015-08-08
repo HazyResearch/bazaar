@@ -210,6 +210,7 @@ def copy_parse_collect(input=None, batch_size=None, parallelism=2, key_id='item_
 
   # Collect
   execute(collect)
+  execute(get_status)
 
 @task
 @hosts('localhost')
