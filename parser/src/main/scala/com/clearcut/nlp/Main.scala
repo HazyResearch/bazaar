@@ -120,7 +120,7 @@ object Main extends App {
         dp.parseDocumentString(documentStr).sentences.zipWithIndex
             .foreach { case (sentenceResult, sentence_idx) =>
           if (docIds(0) != "") {
-            val idsOutline = docIds
+            val idsOutline = docIds.map(x => dp.replaceChars(x))
             val mainOutline = List(
               sentence_idx + 1,
               dp.replaceChars(sentenceResult.sentence),

@@ -21,5 +21,5 @@ export AZURE_ROLE_SIZE=${AZURE_ROLE_SIZE:-Standard_D2}
 # AWS_SECRET_ACCESS_KEY in ~/.aws/credentials.
 
 # eg. 'm3.large'
-export EC2_INSTANCE_TYPE=${EC2_INSTANCE_TYPE:-m3.large}
-
+#export EC2_INSTANCE_TYPE=${EC2_INSTANCE_TYPE:-r3.4xlarge}
+export EC2_INSTANCE_TYPE=m3.2xlarge
