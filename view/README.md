@@ -3,8 +3,6 @@ View
 
 View visualizations of extractions and NLP annotations. Search by keywords.
 
-For an example, visit http://api.clearcutcorp.com/view.
-
 
 ## Installation
 
