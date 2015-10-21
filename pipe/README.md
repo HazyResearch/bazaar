@@ -123,3 +123,23 @@ You can also run our python readers and writers in a python REPL and create your
 ## Setup
 
 Run `setup.sh` to install dependencies and build the parser. Pipe requires Java 8.
+
+## Usage
+
+Here are a few examples showing how to call Pipe with the provided launcher scripts.
+
+```
+./run.sh -i INPUT.json --formatIn json --formatOut json -v content -k doc_id -a SimpleStanfordPipeline -o OUTPUT
+```
+Reads INPUT.json which contains json objects with fields "doc_id" and "content". Writes results as json objects to file OUTPUT.
+
+```
+./run.sh -i INPUT.json --formatIn json --formatOut column -v content -k doc_id -a StanfordTokenizer,StanfordSentenceSplitter,StanfordPOSTagger,StanfordLemmatizer,StanfordNERTagger,StanfordSRParser -o test
+```
+Runs a custom set of annotators and stores results in column format.
+
+```
+/run_parallel.sh --input=INPUT.json --parallelism=10 '--formatIn json --formatOut column -v content -k doc_id -a ExtendedStanfordPipeline'
+```
+Splits the input file into segments and runs 10 parallel processes at a time. The ExtendedStanfordPipeline adds parse trees and true case annotations.
+
