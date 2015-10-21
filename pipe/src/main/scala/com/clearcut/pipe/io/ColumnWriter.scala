@@ -10,6 +10,8 @@ class ColumnWriter(dir:String) extends Writer {
   var writers:Array[BufferedWriter] = null
 
   def setSchema(schema:Schema): Unit = {
+    if (! new File(dir).exists)
+      new File(dir).mkdirs()
     writers = schema.annTyps.map(t => {
       val name = dir + "/ann." + lowerFirst(t)
       if (new File(name).exists)
