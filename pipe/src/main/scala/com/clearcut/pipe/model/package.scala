@@ -22,6 +22,7 @@ package object model {
   type TextMappings = Array[TextMapping]
   type TokenOffsets = Array[Offsets]
   type Tokens = Array[String]
+  type TrueCases = Array[String]
 
   /* Constants used for offsets */
   val FROM = 0

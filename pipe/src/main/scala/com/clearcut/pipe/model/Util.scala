@@ -19,7 +19,8 @@ object Util {
     classOf[TextFragments],
     classOf[TextMappings],
     classOf[TokenOffsets],
-    classOf[Tokens]
+    classOf[Tokens],
+    classOf[TrueCases]
   )
 
 //  val name2clazz =
@@ -45,7 +46,8 @@ object Util {
     "textFragments" -> classOf[TextFragments],
     "textMappings" -> classOf[TextMappings],
     "tokenOffsets" -> classOf[TokenOffsets],
-    "tokens" -> classOf[Tokens]
+    "tokens" -> classOf[Tokens],
+    "trueCases" -> classOf[TrueCases]
   )
 
 
