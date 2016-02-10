@@ -1,10 +1,17 @@
 package com.clearcut.pipe.annotator
 
+import java.util.Properties
 import scala.reflect.runtime.universe._
 import com.clearcut.pipe.model._
 
 abstract class Annotator[In,Out](implicit inTag:TypeTag[In], outTag:TypeTag[Out])
   extends java.io.Serializable {
+
+  var properties = new Properties()
+
+  def setProperties(p:java.util.Properties) = {
+    properties = p
+  }
 
   def annotate(in:In):Out
 

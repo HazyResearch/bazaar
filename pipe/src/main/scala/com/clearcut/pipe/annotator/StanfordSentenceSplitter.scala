@@ -24,7 +24,6 @@ import edu.stanford.nlp.util.CoreMap
 
 class StanfordSentenceSplitter extends Annotator[(Text,TokenOffsets,Tokens), (SentenceOffsets,SentenceTokenOffsets)] {
 
-	val properties = new Properties
 	@transient lazy val stanfordAnnotator =
 		AnnotatorFactories.sentenceSplit(properties, StanfordUtil.annotatorImplementations).create()
 
@@ -99,7 +98,7 @@ object StanfordSentenceSplitter {
 class StanfordSentenceSplitterWithFrags extends Annotator[(Text,TextFragments,TokenOffsets,Tokens),
 	(SentenceOffsets,SentenceTokenOffsets)] {
 
-  val properties = new Properties()
+  //val properties = new Properties()
   //@transient lazy val stanfordAnnotator = StanfordHelper.getAnnotator(properties, "ssplit")
 	@transient lazy val stanfordAnnotator =
 		AnnotatorFactories.sentenceSplit(properties, StanfordUtil.annotatorImplementations).create()

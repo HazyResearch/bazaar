@@ -70,6 +70,17 @@ object Main extends App {
   val annotators:Array[Annotator[_,_]] = conf.annotators.split(",").map (s =>
       Class.forName("com.clearcut.pipe.annotator." + s.trim).newInstance().asInstanceOf[Annotator[_,_]])
 
+  // load configuration properties from properties file
+  if (new java.io.File("config.properties").exists) {
+    println("config.properties exists")
+    val prop = new java.util.Properties()
+    val fromFile = new java.io.FileReader("config.properties")
+    prop.load(fromFile)
+    fromFile.close
+    for (ann <- annotators)
+      ann.setProperties(prop)
+  }
+
   val reader:Reader = conf.formatIn match {
     case "column" => new ColumnReader(conf.in)
     case "json" => new JsonReader(conf.in, conf.idKey, conf.documentKey)
