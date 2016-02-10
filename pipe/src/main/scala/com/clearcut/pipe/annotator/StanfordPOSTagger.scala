@@ -9,7 +9,6 @@ import java.util._
 /** Wraps CoreNLP POS Tagger as an Annotator. */
 class StanfordPOSTagger extends Annotator[(Text,TokenOffsets,Tokens,SentenceOffsets),(Poss)] {
   
-  val properties = new Properties()
   @transient lazy val stanfordAnnotator =
     AnnotatorFactories.posTag(properties, StanfordUtil.annotatorImplementations).create()
 

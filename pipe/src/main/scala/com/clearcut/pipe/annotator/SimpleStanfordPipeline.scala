@@ -7,15 +7,18 @@ import com.clearcut.pipe.model._
 class SimpleStanfordPipeline extends Annotator[(Text), (SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas,
   SentenceDependencies)] {
 
-  val props = new Properties()
-  props.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
-  props.put("parse.maxlen", "100")
-  props.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
-  props.put("threads", "1") // Should use extractor-level parallelism
-  props.put("clean.allowflawedxml", "true")
-  props.put("clean.sentenceendingtags", "p|br|div|li|ul|ol|h1|h2|h3|h4|h5|blockquote|section|article")
+  //val props = new Properties()
+  override def setProperties(p:Properties) {
+    super.setProperties(p)
+    properties.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse")
+    properties.put("parse.maxlen", "100")
+    properties.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
+    properties.put("threads", "1") // Should use extractor-level parallelism
+    properties.put("clean.allowflawedxml", "true")
+    properties.put("clean.sentenceendingtags", "p|br|div|li|ul|ol|h1|h2|h3|h4|h5|blockquote|section|article")
+  }
 
-  @transient lazy val pipeline = new StanfordCoreNLP(props)
+  @transient lazy val pipeline = new StanfordCoreNLP(properties)
 
   override def annotate(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies) = {
     // Temporary fix for bug where brackets are being incorrectly treated as punct

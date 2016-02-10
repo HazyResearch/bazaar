@@ -17,8 +17,6 @@ import scala.collection.mutable.ArrayBuffer
 class StanfordCoreferenceResolver extends Annotator[(Text,TokenOffsets,Tokens,SentenceOffsets,SentenceTokenOffsets,
 	Poss,NerTags,Parses,SentenceDependencies),(Mentions,Coreferences)] {
 
-	val properties = new Properties()
-
 	// make sure StanfordCoreNLP has parse annotator, which is needed by dcoref
   @transient lazy val stanfordAnnotator =
     AnnotatorFactories.coref(properties, StanfordUtil.annotatorImplementations).create()

@@ -10,8 +10,6 @@ import scala.collection.JavaConverters._
 /** Wraps CoreNLP Tokenizer as an Annotator. */
 class StanfordTokenizer extends Annotator[Text,(TokenOffsets,Tokens)] {
 
-  val properties = new Properties()
-
   @transient lazy val stanfordAnnotator =
     AnnotatorFactories.tokenize(properties, StanfordUtil.annotatorImplementations).create()
 
