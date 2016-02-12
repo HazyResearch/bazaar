@@ -28,52 +28,24 @@ class ExtendedCleanHtmlStanfordPipeline extends Annotator[(Text), (Html, Sentenc
   val stripHtml = Pattern.compile("<\\/?a|A[^>]*>")
 
   override def annotate(t:Text):(Html, SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies, Parses, TrueCases, SentenceTokenOffsets) = {
+
+    // clean up Html
     var text = extractCleanHtml(t)
-    //var text = t
-
-
-    //var text = extractText(t)
-    //println(text)
 
     // Temporary fix for bug where brackets are being incorrectly treated as punct
     // and somehow this messes up the whole dep parse -> change them to round braces
     text = text.replaceAll( """\[""", "(").replaceAll( """\]""", ")")
-
-    /*
-    // workaround for a CoreNLP bug, not sure why some <a href=...> </a> tags
-    // are not correctly handled by cleanxml
-    val m = stripHtml.matcher(text)
-    val ca = text.toCharArray()
-    while (m.find()) {
-        for (i <- m.start() until m.end())
-            ca(i) = ' '
-    }
-    text = new String(ca)
-    */
 
     var stanAnn = new Annotation(text)
     try {
       pipeline.annotate(stanAnn)
     
     } catch {
-      // Even if we clean up the HTML tags with beautifulsoup (python) before
-      // running this annotator, we sometimes observe an error that one tag is
-      // closed, but opened. In this case, we can clean with jsoup, and it works.
-
+      // If our pipeline still fails on this input, we return an empty tuple.
       case e:Exception =>
          System.err.println(text)
          e.printStackTrace(System.err)
          System.err.flush()
-         /*
-         if (e.getMessage() != null && 
-             e.getMessage().startsWith("Got a close tag")) {
-            text = extractCleanHtml(text)
-            //text = text.replaceAll("<[^>]+>", "")
-            stanAnn = new Annotation(text)
-            pipeline.annotate(stanAnn)
-         } else
-            throw e
-         */
          return (text, Array[Offsets](), Array[Offsets](), Array[String](),           Array[String](), Array[String](), Array[String](), Array[Array[Dependency]](), Array[String](), Array[String](), Array[Offsets]())  
     }
 
@@ -89,29 +61,8 @@ class ExtendedCleanHtmlStanfordPipeline extends Annotator[(Text), (Html, Sentenc
     (text, so, toa, to, poss, nertags, lemmas, deps, pa, tcs, sto)
   }
 
-  def extractText(s:String):String = {
-    //Jsoup.parse(s).text()
-    getText(Jsoup.parse(s))
-  }
-
   def extractCleanHtml(html:String):String = {
-    //Jsoup.clean(html, Whitelist.relaxed())
-    //val doc = Jsoup.parse(html)
     val doc = Jsoup.parseBodyFragment(html).body()
     doc.html()
-  }
-
-  import org.jsoup.nodes._
-
-  def getText(cell:Element):String = {
-    var text:String = ""
-    for (child <- cell.childNodes()) {
-      if (child.isInstanceOf[TextNode]) {
-        text += child.asInstanceOf[TextNode].getWholeText()
-      } else if (child.isInstanceOf[Element]) {
-        text += getText(child.asInstanceOf[Element])
-      }
-    }
-    text
   }
 }
