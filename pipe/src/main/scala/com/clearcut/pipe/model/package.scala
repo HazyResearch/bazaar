@@ -4,6 +4,7 @@ import com.clearcut.pipe.io.Json
 
 /** Set of our cross-language, minimalist schema */
 package object model {
+  type Html = String
   type Coreferences = Array[CoreferenceChain]
   type Dependencies = Array[Dependency]
   type Id = String
