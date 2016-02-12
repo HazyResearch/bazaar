@@ -50,7 +50,7 @@ echo "batch-size  = $BATCH_SIZE"
 RUN_SCRIPT=`cd $(dirname $0)/; pwd`"/run.sh $@"
 echo $RUN_SCRIPT
 mkdir -p $INPUT_FILE.split
-rm -f $INPUT_FILE.split/*
+rm -rf $INPUT_FILE.split/*
 
 # Split the input file into subfiles
 split -a 10 -l $BATCH_SIZE $INPUT_FILE $INPUT_FILE.split/input-
