@@ -7,7 +7,7 @@ import java.util.Properties
 import com.clearcut.pipe.model._
 
 class ExtendedStanfordPipeline extends Annotator[(Text), (SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas,
-  SentenceDependencies, Parses, TrueCases)] {
+  SentenceDependencies, Parses, TrueCases, SentenceTokenOffsets)] {
 
   val props = new Properties()
   props.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse, truecase")
@@ -19,10 +19,11 @@ class ExtendedStanfordPipeline extends Annotator[(Text), (SentenceOffsets, Token
 
   @transient lazy val pipeline = new StanfordCoreNLP(props)
 
-  override def annotate(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies, Parses, TrueCases) = {
+  override def annotate(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies, Parses, TrueCases, SentenceTokenOffsets) = {
     // Temporary fix for bug where brackets are being incorrectly treated as punct
     // and somehow this messes up the whole dep parse -> change them to round braces
-    val text = t.replaceAll( """\[""", "(").replaceAll( """\]""", ")")
+    // val text = t.replaceAll( """\[""", "(").replaceAll( """\]""", ")")
+    val text = t
 
     val stanAnn = new Annotation(text)
     pipeline.annotate(stanAnn)
@@ -36,7 +37,7 @@ class ExtendedStanfordPipeline extends Annotator[(Text), (SentenceOffsets, Token
     val pa = StanfordSRParser.fromStanford(stanAnn)
     val tcs = StanfordTrueCaseAnnotator.fromStanford(stanAnn)
 
-    (so, toa, to, poss, nertags, lemmas, deps, pa, tcs)
+    (so, toa, to, poss, nertags, lemmas, deps, pa, tcs, sto)
   }
 }
 
