@@ -6,6 +6,7 @@ import com.clearcut.pipe.model._
 import com.clearcut.pipe.Schema
 
 class ColumnWriter(dir:String) extends Writer {
+  val BUFFER_SIZE = 10 * 1024 * 1024
 
   var writers:Array[BufferedWriter] = null
 
@@ -18,7 +19,7 @@ class ColumnWriter(dir:String) extends Writer {
         null
       else
         new BufferedWriter(
-          new OutputStreamWriter(new FileOutputStream(name)))
+          new OutputStreamWriter(new FileOutputStream(name)), BUFFER_SIZE)
     })
   }
 

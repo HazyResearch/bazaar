@@ -14,14 +14,14 @@ import scala.io.Source
 class JsonReader(in:String,
                  idKey:String, documentKey:String)
   extends Reader with Iterator[Array[AnyRef]] {
-
+  val BUFFER_SIZE = 10 * 1024 * 1024
 
   implicit val codec = new scala.io.Codec(
     java.nio.charset.Charset.forName("utf-8"))
   codec.onMalformedInput(CodingErrorAction.IGNORE)
   codec.onUnmappableCharacter(CodingErrorAction.IGNORE)
 
-  val reader = Source.fromFile(in)
+  val reader = Source.fromFile(new java.io.File(in), BUFFER_SIZE)
 
   var it = reader.getLines.zipWithIndex
   var _next = fetchNext()

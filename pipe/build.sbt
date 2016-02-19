@@ -16,12 +16,13 @@ libraryDependencies ++= List(
   "ch.qos.logback" % "logback-classic" % "1.0.7",
   "com.typesafe.play" %% "play-json" % "2.3.4",
   "com.github.scopt" %% "scopt" % "3.2.0",
-  "edu.stanford.nlp" % "stanford-corenlp" % "3.5.2",
-  "edu.stanford.nlp" % "stanford-corenlp" % "3.5.2" classifier "models",
+  "edu.stanford.nlp" % "stanford-corenlp" % "3.6.0",
+  "edu.stanford.nlp" % "stanford-corenlp" % "3.6.0" classifier "models",
   "org.scalatest" % "scalatest_2.11" % "2.2.5" % "test",
   "org.http4s" %% "http4s-dsl" % "0.7.0",
   "org.http4s" %% "http4s-jetty" % "0.7.0",
-  "org.json4s" %% "json4s-jackson" % "3.2.11"
+  "org.json4s" %% "json4s-jackson" % "3.2.11",
+  "org.jsoup" % "jsoup" % "1.8.3"
 )
 
 unmanagedJars in Compile += file("lib/stanford-srparser-2014-10-23-models.jar")
