@@ -9,14 +9,16 @@ import com.clearcut.pipe.model._
 class ExtendedStanfordPipeline extends Annotator[(Text), (SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas,
   SentenceDependencies, Parses, TrueCases, SentenceTokenOffsets)] {
 
-  val props = new Properties()
-  props.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse, truecase")
-  props.put("parse.maxlen", "100")
-  props.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
-  props.put("threads", "1") // Should use extractor-level parallelism
-  props.put("clean.allowflawedxml", "true")
-  props.put("clean.sentenceendingtags", "p|br|div|li|ul|ol|h1|h2|h3|h4|h5|blockquote|section|article")
-
+  override def setProperties(p:Properties) {
+    super.setProperties(p)
+    properties.put("annotators", "tokenize, cleanxml, ssplit, pos, lemma, ner, parse, truecase")
+    properties.put("parse.maxlen", "100")
+    properties.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
+    properties.put("threads", "1") // Should use extractor-level parallelism
+    properties.put("clean.allowflawedxml", "true")
+    properties.put("clean.sentenceendingtags", "p|br|div|li|ul|ol|h1|h2|h3|h4|h5|blockquote|section|article")
+  }
+  
   @transient lazy val pipeline = new StanfordCoreNLP(props)
 
   override def annotate(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies, Parses, TrueCases, SentenceTokenOffsets) = {
