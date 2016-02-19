@@ -10,7 +10,6 @@ import java.util._
 /** Wraps CoreNLP NER Tagger as an Annotator. */
 class StanfordNERTagger extends Annotator[(Text,TokenOffsets,Tokens,SentenceOffsets,Lemmas,Poss), (NerTags)] {
 
-  val properties = new Properties()
   @transient lazy val stanfordAnnotator =
     AnnotatorFactories.nerTag(properties, StanfordUtil.annotatorImplementations).create()
 

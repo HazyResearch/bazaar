@@ -9,7 +9,6 @@ import edu.stanford.nlp.pipeline.{Annotation => StAnnotation, AnnotatorFactories
 /** Wraps CoreNLP Lemmatizer as an Annotator. */
 class StanfordLemmatizer extends Annotator[(Text, Poss, SentenceOffsets, TokenOffsets, Tokens), (Lemmas)] {
 
-  val properties = new Properties()
 	@transient lazy val stanfordAnnotator =
 		AnnotatorFactories.lemma(properties, StanfordUtil.annotatorImplementations).create()
 

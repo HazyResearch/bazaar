@@ -9,7 +9,6 @@ import java.util._
 /** Wraps CoreNLP TrueCaseAnnotator as an Annotator. */
 class StanfordTrueCaseAnnotator extends Annotator[(Text,TokenOffsets,Tokens,SentenceOffsets),(TrueCases)] {
   
-  val properties = new Properties()
   @transient lazy val stanfordAnnotator =
     AnnotatorFactories.truecase(properties, StanfordUtil.annotatorImplementations).create()
 

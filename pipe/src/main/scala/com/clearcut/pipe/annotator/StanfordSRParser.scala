@@ -17,11 +17,13 @@ import scala.collection.JavaConversions._
 class StanfordSRParser extends Annotator[(Text,SentenceOffsets,SentenceTokenOffsets,TokenOffsets,Tokens,Poss),
   (Parses,SentenceDependencies)] {
 
-  val properties = new Properties()
-  properties.setProperty("annotators", "tokenize,ssplit")
-  properties.put("parse.maxlen", "100")
-  properties.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
-  properties.put("threads", "1") // Should use extractor-level parallelism
+  override def setProperties(p:Properties) {
+    super.setProperties(p)
+    p.setProperty("annotators", "tokenize,ssplit")
+    p.put("parse.maxlen", "100")
+    p.put("parse.model", "edu/stanford/nlp/models/srparser/englishSR.ser.gz")
+    p.put("threads", "1") // Should use extractor-level parallelism
+  }
 
   @transient lazy val stanfordAnnotator =
     AnnotatorFactories.parse(properties, StanfordUtil.annotatorImplementations).create()
