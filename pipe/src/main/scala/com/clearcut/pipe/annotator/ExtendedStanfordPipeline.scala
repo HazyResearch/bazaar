@@ -19,7 +19,7 @@ class ExtendedStanfordPipeline extends Annotator[(Text), (SentenceOffsets, Token
     properties.put("clean.sentenceendingtags", "p|br|div|li|ul|ol|h1|h2|h3|h4|h5|blockquote|section|article")
   }
   
-  @transient lazy val pipeline = new StanfordCoreNLP(props)
+  @transient lazy val pipeline = new StanfordCoreNLP(properties)
 
   override def annotate(t:Text):(SentenceOffsets, TokenOffsets, Tokens, Poss, NerTags, Lemmas, SentenceDependencies, Parses, TrueCases, SentenceTokenOffsets) = {
     // Temporary fix for bug where brackets are being incorrectly treated as punct

@@ -24,7 +24,7 @@ class ExtendedCleanHtmlStanfordPipeline extends Annotator[(Text), (Html, Sentenc
     properties.put("clean.sentenceendingtags", "p|br|div|li|ul|ol|h1|h2|h3|h4|h5|blockquote|section|article")
   }
   
-  @transient lazy val pipeline = new StanfordCoreNLP(props)
+  @transient lazy val pipeline = new StanfordCoreNLP(properties)
 
   val stripHtml = Pattern.compile("<\\/?a|A[^>]*>")
 
