@@ -4,7 +4,7 @@
 #
 # Input is a single file that contains one JSON record per line.
 # Output is a single file that contains one JSON record per line.
-# 
+#
 # The number of records and their order is the same in input and output.
 #
 # Example:
@@ -44,6 +44,10 @@ case $i in
     KEEP_SPLIT=true
     shift
     ;;
+  --compress)
+    COMPRESS_OUTPUT=true
+    shift
+    ;;
     *)
     echo "Ignoring parameter: $i"
     break
@@ -60,11 +64,21 @@ fi
 # Setting defaults
 PARALLELISM=${PARALLELISM:-2}
 BATCH_SIZE=${BATCH_SIZE:-1000}
-OUTPUT_FILE=${OUTPUT_FILE:-$INPUT_FILE.out}
 PARAMS=${PARAMS:-}
+KEEP_SPLIT=${KEEP_SPLIT:-false}
+COMPRESS_OUTPUT=${COMPRESS_OUTPUT:-false}
+if [ "$COMPRESS_OUTPUT" = false ]; then
+    OUTPUT_FILE=${OUTPUT_FILE:-$INPUT_FILE.out}
+else
+    OUTPUT_FILE=${OUTPUT_FILE:-$INPUT_FILE.out.gz}
+fi
 
 echo "parallelism = $PARALLELISM"
 echo "batch-size  = $BATCH_SIZE"
+echo "compress    = $COMPRESS_OUTPUT"
+
+# Fixed a bug when "config.properties" does not exists
+touch config.properties
 
 RUN_SCRIPT=`cd $(dirname $0)/; pwd`"/run.sh --formatIn json --formatOut json $PARAMS"
 echo $RUN_SCRIPT
@@ -85,7 +99,11 @@ function merge_json_format {
     # merging json files
     for file in $SPLIT_DIR/*.out
     do
-        cat $file >> $OUTPUT_FILE
+        if [ "$COMPRESS_OUTPUT" = false ]; then
+            cat $file >> $OUTPUT_FILE
+        else
+            cat $file | gzip >> $OUTPUT_FILE
+        fi
     done
 }
 
@@ -94,14 +112,14 @@ function merge_column_format {
     SPLIT_DIR=$1
     OUTPUT_FILE=$2
     # merging column format segments
-    
+
     OUTDIR=$INPUT_FILE.out
     if [ -d "$OUTDIR" ]; then
         echo "$OUTDIR already exists. Aborting."
         exit 1
     fi
     mkdir $OUTDIR
-    
+
     # first we determine the different annotators by looking at only one segment
     annotations=()
     for file in $SPLIT_DIR/*
@@ -114,7 +132,7 @@ function merge_column_format {
             break
         fi
     done
-    
+
     # now cat them all together
     for file in $SPLIT_DIR/*
     do
@@ -130,8 +148,8 @@ function merge_column_format {
 merge_json_format $SPLIT_DIR $OUTPUT_FILE
 
 # remove split dir
-if [ -z "$KEEP_SPLIT" ]; then
-    rm -rf $SPLITDIR
+if [ "$KEEP_SPLIT" = false ]; then
+    rm -rf $SPLIT_DIR
 fi
 
 echo "The output is in $OUTPUT_FILE"
