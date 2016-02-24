@@ -44,6 +44,11 @@ case $i in
     KEEP_SPLIT=true
     shift
     ;;
+  --skip-split)
+    SKIP_SPLIT=true
+    KEEP_SPLIT=true # do not touch the original input
+    shift
+    ;;
   --compress)
     COMPRESS_OUTPUT=true
     shift
@@ -88,10 +93,15 @@ mkdir -p $SPLIT_DIR
 rm -rf $SPLIT_DIR/*
 
 # Split the input file into subfiles
-split -a 10 -l $BATCH_SIZE $INPUT_FILE $SPLIT_DIR/input-
+if [ -z "${SKIP_SPLIT:-}" ]; then
+  split -n l/$PARALLELISM $INPUT_FILE $SPLIT_DIR/input-
+else
+  # if skip-split is specified, use the input as a directory that contains pre-split data
+  SPLIT_DIR=$INPUT_FILE
+fi
 
 # Match all files in the split directory
-find $INPUT_FILE.split -name "input-*" 2>/dev/null -print0 | xargs -0 -P $PARALLELISM -L 1 bash -c "${RUN_SCRIPT}"' -i "$0" -o "$0.out"'
+find $SPLIT_DIR/ -type f 2>/dev/null -print0 | xargs -0 -P $PARALLELISM -L 1 bash -c "${RUN_SCRIPT}"' -i "$0" -o "$0.out"'
 
 function merge_json_format {
     SPLIT_DIR=$1
