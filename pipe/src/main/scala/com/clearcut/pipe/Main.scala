@@ -1,7 +1,6 @@
 package com.clearcut.pipe
 
 import java.io.{BufferedWriter, FileOutputStream, OutputStreamWriter}
-
 import com.clearcut.pipe.annotator.Annotator
 import com.clearcut.pipe.io._
 
@@ -11,6 +10,7 @@ object Main extends App {
   case class Config(serverPort: Integer = null,
                     in: String = null,
                     out: String = null,
+                    compress: Boolean = false,
                     formatIn: String = "column",
                     formatOut: String = "column",
                     documentKey: String = "text",
@@ -29,6 +29,9 @@ object Main extends App {
     opt[String]("formatOut") action { (x, c) =>
       c.copy(formatOut = x)
     } text("column, json or tsv")
+    opt[Boolean]('c' ,"compressOut") action { (x, c) =>
+      c.copy(compress = x)
+    } text("Compress output data")
     opt[String]('v', "jsonValue") action { (x, c) =>
       c.copy(documentKey = x)
     } text("JSON key that contains the document content, for example \"documents.text\"")
@@ -89,7 +92,7 @@ object Main extends App {
 
   val writer:Writer = conf.formatOut match {
     case "column" => new ColumnWriter(conf.out)
-    case "json" => new JsonWriter(conf.out)
+    case "json" => new JsonWriter(conf.out, conf.compress)
     case "tsv" => new TsvWriter(conf.out)
   }
 
@@ -108,7 +111,13 @@ object Main extends App {
       var all = t
       for ((a, i) <- annotators.zip(indices)) {
         val input = i.map(index => all(index))
-        all = all ++ a.annotateUnsafe(input:_*)
+        try {
+          all = all ++ a.annotateUnsafe(input:_*)
+        } catch {
+        // If our pipeline still fails on this input, log the errors to file
+        case e: Exception =>
+          errors.write(t.toString)
+        }
       }
       writer.write(all)
     }
