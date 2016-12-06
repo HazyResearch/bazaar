@@ -4,7 +4,8 @@ name := "deepdive-nlp-parser"
 
 version := "0.1"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.0"
+ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
@@ -12,7 +13,7 @@ resolvers += "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases"
 
 libraryDependencies ++= List(
   "ch.qos.logback" % "logback-classic" % "1.0.7",
-  "com.typesafe.play" %% "play-json" % "2.2.1",
+  "com.typesafe.play" %% "play-json" % "2.3.4",
   "com.github.scopt" %% "scopt" % "3.2.0",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1" classifier "models",
